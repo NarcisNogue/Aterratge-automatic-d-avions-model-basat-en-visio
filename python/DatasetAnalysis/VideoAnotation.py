@@ -75,8 +75,7 @@ while(1):
     cv2.namedWindow("frame")
     cv2.setMouseCallback("frame", onClick)
     cv2.imshow("frame", frame_paint)
-    k = cv2.waitKey(30) & 0xff
-    if k == 27:
+    if cv2.waitKey(1) & 0xff == ord('q'):
         break
 
     # Now update the previous frame and previous points
