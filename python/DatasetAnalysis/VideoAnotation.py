@@ -18,11 +18,11 @@ def paintCurrPoint(curr_point, frame):
     rr, cc, val = line_aa(curr_point[0][1], curr_point[0][0], curr_point[1][1], curr_point[1][0])
     frame[rr,cc,2] = 255
     rr, cc, val = line_aa(curr_point[1][1], curr_point[1][0], curr_point[2][1], curr_point[2][0])
-    frame[:,:,2][rr,cc] = 255
+    frame[rr,cc,2] = 255
     rr, cc, val = line_aa(curr_point[2][1], curr_point[2][0], curr_point[3][1], curr_point[3][0])
-    frame[:,:,2][rr,cc] = 255
+    frame[rr,cc,2] = 255
     rr, cc, val = line_aa(curr_point[3][1], curr_point[3][0], curr_point[0][1], curr_point[0][0])
-    frame[:,:,2][rr,cc] = 255
+    frame[rr,cc,2] = 255
     return frame
 
 # params for ShiTomasi corner detection
