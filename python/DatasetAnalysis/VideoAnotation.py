@@ -49,6 +49,8 @@ old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
 mask = np.zeros_like(old_frame)
 valid = False
 
+output = open("../../Datasets/VideoAeroport/2021-02-06-16-13-58.txt", "w")
+
 while(1):
     if(not valid):
         if(len(CLICKED_POINTS) == 4):
@@ -69,6 +71,7 @@ while(1):
 
     if(valid):
         frame_paint = paintCurrPoint(p0[0].astype(np.int32), frame)
+        output.write(",".join([str(i) for i in p0[0].flatten().astype(np.int32)]) + "\n")
     else:
         frame_paint = frame.copy()
 
@@ -82,3 +85,4 @@ while(1):
 
 cv2.destroyAllWindows()
 cap.release()
+output.close()
