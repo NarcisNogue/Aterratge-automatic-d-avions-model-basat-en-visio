@@ -55,6 +55,7 @@ while(1):
     if(not valid):
         if(len(CLICKED_POINTS) == 4):
             p0 = np.array([np.array(CLICKED_POINTS.copy()).astype(dtype=np.float32)])
+            CLICKED_POINTS = []
             valid = True
 
     else:
@@ -78,8 +79,11 @@ while(1):
     cv2.namedWindow("frame")
     cv2.setMouseCallback("frame", onClick)
     cv2.imshow("frame", frame_paint)
-    if cv2.waitKey(1) & 0xff == ord('q'):
+    k = cv2.waitKey(1) & 0xff
+    if k  == ord('q'):
         break
+    if k == ord('s'):
+        valid = not valid
 
     # Now update the previous frame and previous points
 
