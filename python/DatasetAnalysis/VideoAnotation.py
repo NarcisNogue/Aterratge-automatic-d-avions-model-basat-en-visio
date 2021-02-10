@@ -3,16 +3,36 @@
 import numpy as np
 import cv2
 from skimage.draw import line_aa
+import sys
 
 CLICKED_POINTS = []
 
-cap = cv2.VideoCapture('../../Datasets/VideoAeroport/2021-02-06-16-13-58.mp4')
+SELECTED_POINT = None
 
-def onClick(event, x, y, flags, params):
+if(len(sys.argv) < 3):
+    exit()
+
+cap = cv2.VideoCapture(sys.argv[1])
+
+def onClickGetPoints(event, x, y, flags, params):
     if(event == cv2.EVENT_LBUTTONDOWN):
         CLICKED_POINTS.append([x, y])
     if(event==cv2.EVENT_RBUTTONDOWN):
         print(x, y)
+
+def onClickSetPoints(event, x, y, flags, params):
+    print("HELLO")
+    if SELECTED_POINT == None:
+        closest = None
+        bestDist = 0
+        for p, i in enumerate(p0):
+            if closest == None or (res := (abs(x - p0[0]) + abs(y - p0[1]))) < bestDist:
+                closest = i
+                bestDist = res
+        SELECTED_POINT = closest
+    else:
+        p0[SELECTED_POINT] = [x, y]
+        SELECTED_POINT = None
 
 def paintCurrPoint(curr_point, frame):
     rr, cc, val = line_aa(curr_point[0][1], curr_point[0][0], curr_point[1][1], curr_point[1][0])
@@ -43,22 +63,24 @@ color = np.random.randint(0,255,(100,3))
 ret, old_frame = cap.read()
 ret,frame = cap.read()
 old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
-# p0 = cv2.goodFeaturesToTrack(old_gray, mask = None, **feature_params)
+p0 = []
 
 # Create a mask image for drawing purposes
 mask = np.zeros_like(old_frame)
 valid = False
+step = False
 
-output = open("../../Datasets/VideoAeroport/2021-02-06-16-13-58.txt", "w")
+output = open(sys.argv[2], "w")
 
 while(1):
     if(not valid):
         if(len(CLICKED_POINTS) == 4):
             p0 = np.array([np.array(CLICKED_POINTS.copy()).astype(dtype=np.float32)])
+            output.write(",".join([str(i) for i in p0[0].flatten().astype(np.int32)]) + "\n")
             CLICKED_POINTS = []
             valid = True
 
-    else:
+    if(valid or step):
         ret,frame = cap.read()
         if(not ret):
             break
@@ -70,20 +92,27 @@ while(1):
         old_gray = frame_gray.copy()
         p0 = p1.copy()
 
-    if(valid):
+    if(valid or step):
         frame_paint = paintCurrPoint(p0[0].astype(np.int32), frame)
         output.write(",".join([str(i) for i in p0[0].flatten().astype(np.int32)]) + "\n")
     else:
         frame_paint = frame.copy()
 
     cv2.namedWindow("frame")
-    cv2.setMouseCallback("frame", onClick)
+    if(len(p0) != 4):
+        cv2.setMouseCallback("frame", onClickGetPoints)
+    elif not valid:
+        cv2.setMouseCallback("frame", onClickSetPoints)
     cv2.imshow("frame", frame_paint)
-    k = cv2.waitKey(1) & 0xff
+    step = False
+
+    k = cv2.waitKey(30) & 0xff
     if k  == ord('q'):
         break
-    if k == ord('s'):
+    elif k == ord('p'):
         valid = not valid
+    elif k == ord('s'):
+        step = True
 
     # Now update the previous frame and previous points
 

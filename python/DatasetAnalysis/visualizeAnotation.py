@@ -1,11 +1,15 @@
 import numpy as np
 import cv2
 from skimage.draw import line_aa
+import sys
 
 
-cap = cv2.VideoCapture('../../Datasets/VideoAeroport/2021-02-06-16-13-58.mp4')
+if(len(sys.argv) < 3):
+    exit()
 
-testFile = open("../../Datasets/VideoAeroport/2021-02-06-16-13-58.txt", "r")
+cap = cv2.VideoCapture(sys.argv[1])
+
+testFile = open(sys.argv[2], "r")
 
 def paintCurrPoint(curr_point, frame):
     rr, cc, val = line_aa(curr_point[1], curr_point[0], curr_point[3], curr_point[2])
@@ -26,5 +30,5 @@ while(1):
     frame_paint = paintCurrPoint([int(p) for p in point.split(",")], frame)
 
     cv2.imshow("frame", frame_paint)
-    if cv2.waitKey(1) & 0xff == ord('q'):
+    if cv2.waitKey(30) & 0xff == ord('q'):
         break
