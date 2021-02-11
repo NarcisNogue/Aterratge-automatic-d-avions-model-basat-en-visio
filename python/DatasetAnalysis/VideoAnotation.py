@@ -20,20 +20,6 @@ def onClickGetPoints(event, x, y, flags, params):
     if(event==cv2.EVENT_RBUTTONDOWN):
         print(x, y)
 
-def onClickSetPoints(event, x, y, flags, params):
-    print("HELLO")
-    if SELECTED_POINT == None:
-        closest = None
-        bestDist = 0
-        for p, i in enumerate(p0):
-            if closest == None or (res := (abs(x - p0[0]) + abs(y - p0[1]))) < bestDist:
-                closest = i
-                bestDist = res
-        SELECTED_POINT = closest
-    else:
-        p0[SELECTED_POINT] = [x, y]
-        SELECTED_POINT = None
-
 def paintCurrPoint(curr_point, frame):
     rr, cc, val = line_aa(curr_point[0][1], curr_point[0][0], curr_point[1][1], curr_point[1][0])
     frame[rr,cc,2] = 255
@@ -68,7 +54,6 @@ p0 = []
 # Create a mask image for drawing purposes
 mask = np.zeros_like(old_frame)
 valid = False
-step = False
 
 output = open(sys.argv[2], "w")
 
@@ -80,7 +65,7 @@ while(1):
             CLICKED_POINTS = []
             valid = True
 
-    if(valid or step):
+    if(valid):
         ret,frame = cap.read()
         if(not ret):
             break
@@ -92,27 +77,21 @@ while(1):
         old_gray = frame_gray.copy()
         p0 = p1.copy()
 
-    if(valid or step):
+    if(valid):
         frame_paint = paintCurrPoint(p0[0].astype(np.int32), frame)
         output.write(",".join([str(i) for i in p0[0].flatten().astype(np.int32)]) + "\n")
     else:
         frame_paint = frame.copy()
 
     cv2.namedWindow("frame")
-    if(len(p0) != 4):
-        cv2.setMouseCallback("frame", onClickGetPoints)
-    elif not valid:
-        cv2.setMouseCallback("frame", onClickSetPoints)
+    cv2.setMouseCallback("frame", onClickGetPoints)
     cv2.imshow("frame", frame_paint)
-    step = False
 
     k = cv2.waitKey(30) & 0xff
     if k  == ord('q'):
         break
     elif k == ord('p'):
         valid = not valid
-    elif k == ord('s'):
-        step = True
 
     # Now update the previous frame and previous points
 
