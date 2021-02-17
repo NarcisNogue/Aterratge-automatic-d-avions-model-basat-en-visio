@@ -4,3 +4,4 @@
 
 ### No assignada
 https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_video/py_lucas_kanade/py_lucas_kanade.html -- 7/2/2021
+https://www.icgc.cat/Aplicacions/Desenvolupadors/Mapes-per-a-aplicacions-web -- 15/2/2021
