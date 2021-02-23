@@ -1,0 +1,21 @@
+1. Planificació
+    1.1 Redactar tasques
+    
+
+2. Investigar possibles solucions
+
+3. Implementar solució triada
+
+4. Implementar simulació
+
+5. Tests en simulat
+
+6. Construir un avió model pathfinder
+
+7. Investigar integració arduino amb hardware tipic d'avions radiocontrol
+
+8. Construir avió model, de zero o extenent pathfinder
+
+9. Implementar xarxa neuronal i controls en el model
+
+10. Tests en real
