@@ -1,20 +1,33 @@
 1. Planificació
-    1.1 Redactar tasques
-    
 
-2. Investigar possibles solucions
+2. Investigar possibles solucions, veure si hi ha aterratge automatic
+    2.1 Recopilar possibles solucions (models de xarxa neuronal)
+    2.2 Investigar pros i contres de cada un
+    2.3 Escollir model a implementar
 
 3. Implementar solució triada
+    3.1 Crear dataset per a entrenar
+    3.2 Implementar algoritme d'entrenament
+    3.3 Provar i iterar fins aconseguir accuracy desitjada
 
 4. Implementar simulació
+    4.1 Investigar possibles formes de fer una simulació
+    4.2 Implementar simulació de terreny
+    4.3 Implementar simulació d'avió
 
 5. Tests en simulat
+    5.1 Integrar lògica de control sobre la simulació
 
 6. Construir un avió model pathfinder
+    6.1 Investigar sobre construcció d'avions model
+    6.2 Construir estructura principal
+    6.3 Construir electrònica del model
+    6.4 Proves inicials de vol
 
 7. Investigar integració arduino amb hardware tipic d'avions radiocontrol
 
 8. Construir avió model, de zero o extenent pathfinder
+    8.1 Integrar hardware de control autònom al model
 
 9. Implementar xarxa neuronal i controls en el model
 
