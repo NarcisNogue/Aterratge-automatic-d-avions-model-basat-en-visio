@@ -1,5 +1,15 @@
 ### Informe inicial
 
+https://github.com/adafruit/Adafruit_CircuitPython_PCA9685/tree/master/examples -- 26/2/2021
+
+https://www.youtube.com/watch?v=uh5aN_Di8J0&list=PLP1rv37BojTd5NY3E_aqOWUe0uA8J-J1T -- FreeCAD Tutorial -- 27/2/2021
+
+https://en.wikipedia.org/wiki/Autoland#Systems -- 28/2/2021
+
+https://www.skybrary.aero/index.php/Instrument_Landing_System_(ILS) -- 28/2/2021
+
+https://www.skybrary.aero/index.php/Precision_Approach
+
 
 
 ### No assignada
