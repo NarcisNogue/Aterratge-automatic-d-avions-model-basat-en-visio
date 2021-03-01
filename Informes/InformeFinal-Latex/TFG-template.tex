@@ -1,4 +1,4 @@
-﻿\documentclass[10pt,a4paper,twocolumn,twoside]{article}
+\documentclass[10pt,a4paper,twocolumn,twoside]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[catalan]{babel}
 \usepackage{multicol}
@@ -9,6 +9,7 @@
 \usepackage{multirow}
 \usepackage{lettrine}
 \usepackage{hyperref}
+\usepackage{enumitem}
 \usepackage[top=2cm, bottom=1.5cm, left=2cm, right=2cm]{geometry}
 \usepackage[figurename=Fig.,tablename=TAULA]{caption}
 \captionsetup[table]{textfont=sc}
@@ -132,20 +133,43 @@ En la introducció ja he parlat una mica de com funciona l'aterratge autònom av
 sobre els sistemes ILS i faré una ullada a altres projectes similars al meu i com han resolt els problemes que se'm presenten.
 
 \subsection{El sistema ILS}
-\label{subsec-exemple1}
+\label{subsec-ils-system}
 
-El sistema ILS \cite{ILS}, anomenat Instrument Landing System o Sistema d'Aterratge Instrumental
+El sistema ILS \cite{ILS}, anomenat Instrument Landing System o Sistema d'Aterratge Instrumental es considera un sistema d'ajuda per als pilots en situacions de baixa visibilitat, i només algunes categories d'ILS permeten aterratge automàtic a través
+d'un sistema Autoland \cite{Autoland}.
+Els sistemes ILS es poden classificar en tres categories: CAT I, CAT II i CAT III,
+en funció de la precisió que proporcionen en el posicionament de l'aeronau, i només
+les categories II i III es consideren suficients per a aterratges automàtics.
 
-
+Pel que fa al funcionament, un ILS consisteix en dos transmissors de ràdio situats
+a la pista d'aterratge. Un és el localitzador o \textit{localizer} (LOC), que 
+indiquen la direcció de la pista (en la figura \ref{fig-ils-loc} es mostra la pista i la
+senyal de ràdio vistes des de sobre).
 
 
 % Per a fer que la figura ocupi les dues columnes utilitzeu "figure*" per comptes de "figure"
 \begin{figure}[!h]
 \centering
 \fbox{\includegraphics[width=0.4\textwidth, trim={0.2cm 0.5cm 0.2cm 0.1cm}, clip]{img/ILS-LOC}}
-	\caption{Radars ILS-LOC}
+	\caption{Rà dio localitzador ILS}
 	\label{fig-ils-loc}
 \end{figure}
+
+L'altra ràdio és la de pendent de descens o \textit{Glide-Scope} (GS), que permet a
+l'aeronau controlar la ràtio de descens durant l'aproximació. (la figura \ref{fig-ils-gs} mostra la
+pista d'aterratge i la senyal de ràdio vistes de perfil).
+
+\begin{figure}[!h]
+\centering
+\fbox{\includegraphics[width=0.4\textwidth, trim={0.2cm 0.5cm 0.2cm 0.1cm}, clip]{img/ILS-GS}}
+	\caption{Ràdio Glide-Scope ILS}
+	\label{fig-ils-gs}
+\end{figure}
+
+El sistema ILS funciona bé i és molt robust, però necessita que les antenes de ràdio
+a la pista estiguin instal·lades i funcionin correctament, i avui en dia només els
+aeroports i aeròdroms amb més transit solen tenir aquest sistema, les pistes més petites i els aeròdroms en llocs remots solen quedar fora de l'equació pel que fa a aterratges
+amb ILS.
 
 \subsection{Un altre exemple de subsecció}
 \label{subsec-exemple2}
@@ -196,6 +220,67 @@ Forward & FW & Jamie McMaster \\ \hline
 \end{center}
 \end{table}
 
+\section{Planificació}
+
+En aquesta secció desciuré la planificació que vull seguir durant tot el
+projecte i el procés que he seguit per arribar-hi a través del mètode
+PERT \cite{PERT}.
+
+\subsection{Work Breakdown Structure}
+Començaré amb l'Estructura Detallada de Treball o Work Breakdown Structure (WBS)
+\cite{WBS}. En la següent llista organitzaré les tasques que considero que són 
+necessàries en una estructura jeràrquica de dos nivells:
+
+\begin{enumerate}
+    \item Planificar el projecte de forma detallada.
+    \item Investigar possibles solucions pel problema plantejat.
+    \begin{enumerate}[label*=\arabic*.]
+        \item Recopilar una llista de possibles solucions (models de xarxa neuronal).
+        \item Investigar pros i contres de cada possible solució
+        \item Escollir models a implementar, poden ser més d'un si vull investigar-ne més d'un en profunditat
+    \end{enumerate}
+    \item Implementar solucions escollides per a una única pista d'aterratge
+    \begin{enumerate}[label*=\arabic*.]
+        \item Crear datasets o simulació simple per a l'entrenament no supervisat.
+        \item Implementar l'algoritme d'entrenament de les solucions escollides.
+        \item Provar cada xarxa neuronal i iterar fins aconseguir la precisió desitjada.
+    \end{enumerate}
+    \item Implementar una simulació complexa per provar el sistema.
+    \begin{enumerate}[label*=\arabic*.]
+        \item Investigar possibles formes de fer una simulació.
+        \item Implementar la simulació de terreny.
+        \item Implementar la simulació de l'avió model.
+    \end{enumerate}
+    \item Provar el sistema sobre la simulació.
+    \begin{enumerate}[label*=\arabic*.]
+        \item Integrar lògica de control sobre la simulació.
+    \end{enumerate}
+    \item Investigar integració arduino amb hardware tipic d'avions radiocontrol.
+    \item Construir un avió model pathfinder.
+    \begin{enumerate}[label*=\arabic*.]
+        \item Investigar sobre construcció d'avions model.
+        \item Construir estructura principal.
+        \item Construir electrònica del model.
+        \item Proves inicials de vol.
+    \end{enumerate}
+    \item Construir avió model definitiu, de zero o extenent el model pathfinder.
+    \begin{enumerate}[label*=\arabic*.]
+        \item Construir estructura principal.
+        \item Construir electrònica del model.
+        \item Integrar el hardware de control autònom al model.
+    \end{enumerate}
+    \item Implementar xarxa neuronal i controls en el model.
+    \item Provar el model sobre una pista d'aterratge real.
+    \begin{enumerate}[label*=\arabic*.]
+        \item Sobrevolar la pista controlant l'avió manualment i recopilar les dades necessàries per a poder analitzar les decisions del model després del vol.
+        \item Provar l'estabilitat de vol en ràfagues curtes de vol autònom.
+        \item Provar aproximacions autònomes i prendre control just abans de l'aterratge.
+        \item Provar un aterratge complet.
+    \end{enumerate}
+    \item Ampliar la xarxa neuronal perquè l'avió pugui aterrar en qualsevol aeroport.
+\end{enumerate}
+
+
 \section{Conclusions}
 
 .... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
@@ -227,39 +312,34 @@ Instrument Landing System (ILS)
 \\\url{https://www.skybrary.aero/index.php/Instrument_Landing_System_(ILS)}
 \\Visitat 28-2-2021
 
-\bibitem{2}
-Referència 2
+\bibitem{Autoland}
+Autoland Systems
+\\\url{https://www.skybrary.aero/index.php/Autoland}
+\\Visitat 1-3-2021
 
-\bibitem{3}
-Etc.
+\bibitem{PERT}
+La metodologia PERT
+\\\url{https://en.wikipedia.org/wiki/Program_evaluation_and_review_technique}
+\\Visitat 1-3-2021
 
+\bibitem{WBS}
+Work Breakdown Structure
+\\\url{https://www.workbreakdownstructure.com/}
+\\Visitat 1-3-2021
 
 \end{thebibliography}
 
-\appendix
-
-\section*{Apèndix}
-
-\setcounter{section}{1}
-
-\subsection{Secció d'Apèndix}
-
-
-... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-
-\subsection{Secció d'Apèndix}
-
-
-... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-
-
 \end{document}
 
+© 2021 GitHub, Inc.
+Terms
+Privacy
+Security
+Status
+Docs
+Contact GitHub
+Pricing
+API
+Training
+Blog
+About
