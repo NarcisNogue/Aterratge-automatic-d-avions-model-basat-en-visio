@@ -7,6 +7,8 @@ import tensorflow_datasets as tfds
 from IPython.display import clear_output
 import matplotlib.pyplot as plt
 
+import gc
+
 dataset, info = tfds.load('oxford_iiit_pet:3.*.*', with_info=True)
 
 def normalize(input_image, input_mask):
@@ -16,8 +18,8 @@ def normalize(input_image, input_mask):
 
 @tf.function
 def load_image_train(datapoint):
-    input_image = tf.image.resize(datapoint['image'], (128, 128))
-    input_mask = tf.image.resize(datapoint['segmentation_mask'], (128, 128))
+    input_image = tf.image.resize(datapoint['image'], (IMAGE_SIZE, IMAGE_SIZE))
+    input_mask = tf.image.resize(datapoint['segmentation_mask'], (IMAGE_SIZE, IMAGE_SIZE))
 
     if tf.random.uniform(()) > 0.5:
         input_image = tf.image.flip_left_right(input_image)
@@ -28,8 +30,8 @@ def load_image_train(datapoint):
     return input_image, input_mask
 
 def load_image_test(datapoint):
-    input_image = tf.image.resize(datapoint['image'], (128, 128))
-    input_mask = tf.image.resize(datapoint['segmentation_mask'], (128, 128))
+    input_image = tf.image.resize(datapoint['image'], (IMAGE_SIZE, IMAGE_SIZE))
+    input_mask = tf.image.resize(datapoint['segmentation_mask'], (IMAGE_SIZE, IMAGE_SIZE))
 
     input_image, input_mask = normalize(input_image, input_mask)
 
@@ -37,7 +39,8 @@ def load_image_test(datapoint):
 
 
 TRAIN_LENGTH = info.splits['train'].num_examples
-BATCH_SIZE = 64
+IMAGE_SIZE = 64
+BATCH_SIZE = 4
 BUFFER_SIZE = 1000
 STEPS_PER_EPOCH = TRAIN_LENGTH // BATCH_SIZE
 
@@ -46,7 +49,7 @@ train = dataset['train'].map(load_image_train, num_parallel_calls=tf.data.AUTOTU
 test = dataset['test'].map(load_image_test)
 
 
-train_dataset = train.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat()
+train_dataset = train.shuffle(BUFFER_SIZE).batch(BATCH_SIZE).cache().repeat()
 train_dataset = train_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
 test_dataset = test.batch(BATCH_SIZE)
 
@@ -64,14 +67,14 @@ def display(display_list):
 
 for image, mask in train.take(1):
     sample_image, sample_mask = image, mask
-display([sample_image, sample_mask])
+# display([sample_image, sample_mask])
 
 
 # MODEL
 
 OUTPUT_CHANNELS = 3
 
-base_model = tf.keras.applications.MobileNetV2(input_shape=[128, 128, 3], include_top=False)
+base_model = tf.keras.applications.MobileNetV2(input_shape=[IMAGE_SIZE, IMAGE_SIZE, 3], include_top=False)
 
 # Use the activations of these layers
 layer_names = [
@@ -96,7 +99,7 @@ up_stack = [
 ]
 
 def unet_model(output_channels):
-    inputs = tf.keras.layers.Input(shape=[128, 128, 3])
+    inputs = tf.keras.layers.Input(shape=[IMAGE_SIZE, IMAGE_SIZE, 3])
 
     # Downsampling through the model
     skips = down_stack(inputs)
@@ -142,17 +145,18 @@ def show_predictions(dataset=None, num=1):
                 create_mask(model.predict(sample_image[tf.newaxis, ...]))])
 
 
-show_predictions()
+# show_predictions()
 
 
 class DisplayCallback(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         clear_output(wait=True)
         show_predictions()
+        gc.collect()
         print ('\nSample Prediction after epoch {}\n'.format(epoch+1))
 
 
-EPOCHS = 20
+EPOCHS = 2
 VAL_SUBSPLITS = 5
 VALIDATION_STEPS = info.splits['test'].num_examples//BATCH_SIZE//VAL_SUBSPLITS
 
@@ -178,3 +182,5 @@ plt.legend()
 plt.show()
 
 show_predictions(test_dataset, 3)
+
+model.save('ModelTest.h5')
