@@ -16,7 +16,7 @@ COORDS = np.array([
 
 # Rotar la imatge de manera que encari la pista d'aterratge
 
-rot_angle = math.atan2(COORDS[0][0] - COORDS[3][0], COORDS[3][1] - COORDS[0][1])*180/math.pi
+rot_angle = - math.atan2(COORDS[0][0] - COORDS[3][0], COORDS[3][1] - COORDS[0][1])*180/math.pi - 90
 print(rot_angle)
 
 
@@ -45,6 +45,6 @@ image = service.getSatImage(
 cv2.imshow("Image", image)
 # cv2.waitKey()
 
-rotated = imutils.rotate_bound(image, -rot_angle - 90)
+rotated = imutils.rotate_bound(image, rot_angle)
 cv2.imshow("Image2", rotated)
 cv2.waitKey()
