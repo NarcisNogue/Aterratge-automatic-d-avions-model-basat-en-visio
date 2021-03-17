@@ -182,13 +182,16 @@ for i in range(image_side):
 
 
             print(np.array([(res[0]/res[2]), (res[1]/res[2])]))
-            quadrant = np.array([np.floor((res[0]/res[2]) / image_side), np.floor((res[1]/res[2]) / image_side)]).astype(int).flatten()
+            quadrant = np.array([-np.floor((res[1]/res[2]) / image_side), -np.floor((res[0]/res[2]) / image_side)]).astype(int).flatten()
+            print(quadrant)
             new_image_coords = [
-                min_lat - vertical_margin + image_size*quadrant[0],
+                min_lat - vertical_margin + image_size*-quadrant[0],
                 min_lon - horiz_margin + image_size*quadrant[1],
-                max_lat + vertical_margin + image_size*quadrant[0],
+                max_lat + vertical_margin + image_size*-quadrant[0],
                 max_lon + horiz_margin + image_size*quadrant[1]
             ]
+            print(new_image_coords)
+            print(min_lat - vertical_margin, min_lon - horiz_margin, max_lat + vertical_margin, max_lon + horiz_margin)
             new_image = service.getSatImage(
                     new_image_coords[0],
                     new_image_coords[1],
@@ -208,12 +211,10 @@ for i in range(image_side):
                 ]
             )
 
-            image3 = cv2.warpPerspective(new_image, np.matmul(h, translation_matrix), (image_side,image_side))
-            cv2.imshow("ImageResult3", image3)
-            # cv2.waitKey()
+            cv2.imshow("ImageResult4", new_image)
 
-            image2 = cv2.warpPerspective(result, h, (image_side, image_side), flags=cv2.WARP_INVERSE_MAP)
-            cv2.imshow("ImageResult", image2)
+            image3 = cv2.warpPerspective(new_image, np.dot(h, translation_matrix), (image_side,image_side))
+            cv2.imshow("ImageResult3", image3)
             cv2.waitKey()
             exit()
             
