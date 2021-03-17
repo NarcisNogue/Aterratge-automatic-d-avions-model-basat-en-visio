@@ -9,7 +9,7 @@ service = ICGCService()
 ################################### VARIABLES GLOBALS ###################################################
 #########################################################################################################
 
-SHOW_IMAGES_LEVEL = 1
+SHOW_IMAGES_LEVEL = 2
 
 LENGTH_PISTA = 50 #m
 WIDTH_PISTA = 11.74 #m
@@ -124,6 +124,7 @@ print()
 h, status = cv2.findHomography(image_coords, target_points)
 h_inv = np.linalg.inv(h)
 
+
 result = cv2.warpPerspective(image, h, (image_side,image_side))
 
 #Pintar horitzó
@@ -134,47 +135,51 @@ cv2.imshow("ImageResult2", result)
 # cv2.waitKey()
 
 # Importar la resta d'imatges
-for i in range(image_side):
-    for j in range(image_side): # Double nested for loop yaay
-        if(not result[i, j].any()):
-            print(i, j)
-            res = np.matmul(h_inv, np.array([i, j, 1]).reshape(3,1))
-            print(cv2.perspectiveTransform(np.array([i, j]), h_inv))
-            print(np.array([(res[0]/res[2]), (res[1]/res[2])]))
-            quadrant = np.array([np.floor((res[0]/res[2]) / image_side), np.floor((res[1]/res[2]) / image_side)]).astype(int).flatten()
-            new_image_coords = [
-                min_lat - vertical_margin + image_size*quadrant[0],
-                min_lon - horiz_margin + image_size*quadrant[1],
-                max_lat + vertical_margin + image_size*quadrant[0],
-                max_lon + horiz_margin + image_size*quadrant[1]
-            ]
-            new_image = service.getSatImage(
-                    new_image_coords[0],
-                    new_image_coords[1],
-                    new_image_coords[2],
-                    new_image_coords[3],
-                    height=image_side,
-                    width=image_side,
-                    layer="orto25c2016"
-                )
+# for i in range(image_side):
+#     for j in range(image_side): # Double nested for loop yaay
+#         if(not result[i, j].any()):
+#             print(i, j)
+#             res = np.dot(h_inv, np.array([i, j, 1]).reshape(3,1))
 
 
-            translation_matrix = np.array(
-                [
-                    [1, 0, image_side*quadrant[0]],
-                    [0, 1, image_side*quadrant[1]],
-                    [0, 0, 1]
-                ]
-            )
+#             ### TODO Tot lo següent no te sentit fins que no descobreixi com fer homografia inversa d'un punt fora la imatge original 
+#             print(np.array([(res[0]/res[2]), (res[1]/res[2])]))
+#             quadrant = np.array([np.floor((res[0]/res[2]) / image_side), np.floor((res[1]/res[2]) / image_side)]).astype(int).flatten()
+#             new_image_coords = [
+#                 min_lat - vertical_margin + image_size*quadrant[0],
+#                 min_lon - horiz_margin + image_size*quadrant[1],
+#                 max_lat + vertical_margin + image_size*quadrant[0],
+#                 max_lon + horiz_margin + image_size*quadrant[1]
+#             ]
+#             new_image = service.getSatImage(
+#                     new_image_coords[0],
+#                     new_image_coords[1],
+#                     new_image_coords[2],
+#                     new_image_coords[3],
+#                     height=image_side,
+#                     width=image_side,
+#                     layer="orto25c2016"
+#                 )
 
-            image3 = cv2.warpPerspective(new_image, np.matmul(h, translation_matrix), (image_side,image_side))
-            cv2.imshow("ImageResult3", image3)
-            # cv2.waitKey()
 
-            image2 = cv2.warpPerspective(result, h, (image_side, image_side), flags=cv2.WARP_INVERSE_MAP)
-            cv2.imshow("ImageResult", image2)
-            cv2.waitKey()
-            exit()
+#             translation_matrix = np.array(
+#                 [
+#                     [1, 0, image_side*quadrant[0]],
+#                     [0, 1, image_side*quadrant[1]],
+#                     [0, 0, 1]
+#                 ]
+#             )
+
+#             image3 = cv2.warpPerspective(new_image, np.matmul(h, translation_matrix), (image_side,image_side))
+#             cv2.imshow("ImageResult3", image3)
+#             # cv2.waitKey()
+
+#             image2 = cv2.warpPerspective(result, h, (image_side, image_side), flags=cv2.WARP_INVERSE_MAP)
+#             cv2.imshow("ImageResult", image2)
+#             cv2.waitKey()
+#             exit()
+
+            ### Fins aqui no te sentit
             
 
 
