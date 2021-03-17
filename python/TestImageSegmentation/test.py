@@ -39,9 +39,9 @@ def load_image_test(datapoint):
 
 
 TRAIN_LENGTH = info.splits['train'].num_examples
-IMAGE_SIZE = 64
-BATCH_SIZE = 4
-BUFFER_SIZE = 1000
+IMAGE_SIZE = 96
+BATCH_SIZE = 8
+BUFFER_SIZE = 100
 STEPS_PER_EPOCH = TRAIN_LENGTH // BATCH_SIZE
 
 
@@ -49,7 +49,7 @@ train = dataset['train'].map(load_image_train, num_parallel_calls=tf.data.AUTOTU
 test = dataset['test'].map(load_image_test)
 
 
-train_dataset = train.shuffle(BUFFER_SIZE).batch(BATCH_SIZE).cache().repeat()
+train_dataset = train.take(BUFFER_SIZE).shuffle(BUFFER_SIZE).batch(BATCH_SIZE).cache().repeat()
 train_dataset = train_dataset.prefetch(buffer_size=tf.data.AUTOTUNE)
 test_dataset = test.batch(BATCH_SIZE)
 
@@ -156,8 +156,8 @@ class DisplayCallback(tf.keras.callbacks.Callback):
         print ('\nSample Prediction after epoch {}\n'.format(epoch+1))
 
 
-EPOCHS = 2
-VAL_SUBSPLITS = 5
+EPOCHS = 1
+VAL_SUBSPLITS = 10
 VALIDATION_STEPS = info.splits['test'].num_examples//BATCH_SIZE//VAL_SUBSPLITS
 
 model_history = model.fit(train_dataset, epochs=EPOCHS,
