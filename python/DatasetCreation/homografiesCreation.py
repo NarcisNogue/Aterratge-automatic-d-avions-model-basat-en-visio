@@ -114,9 +114,9 @@ COORDS_PISTA_MON = np.array([
     [0, LENGTH_PISTA, 0]
 ])
 
-pos = (-WIDTH_PISTA/2, -LENGTH_PISTA/2, 15) #m (x, y, z)
+pos = (-30, -50, 30) #m (x, y, z)
 
-angle = (-10, 0, 0) #º (de moment ignoraré el y... TODO i guess)
+angle = (-30, 0, 20) #º (de moment ignoraré el y... TODO i guess)
 
 # GET COORDINATES DE LES CANTONADES
 angles_cantonades = np.zeros((4,2))
@@ -158,7 +158,11 @@ point_hor = findIntersection(cantonades_finals[0], cantonades_finals[1], cantona
 if(point_hor is not False and point_hor[1] < min_Y):
     min_Y = point_ver[1]
 
-horizon_level = int(max(0, min_Y) + image_side*0.05) # Una mica de marge
+horizon_level = int(max(0, min_Y) + image_side*0.15) # Una mica de marge
+
+horizon_mask = np.zeros((image_side, image_side), np.uint8)
+
+horizon_mask[0:horizon_level, :] = 1
 
 print(horizon_level)
 
@@ -176,13 +180,13 @@ cv2.imshow("ImageResult2", result)
 # Importar la resta d'imatges
 for i in range(image_side):
     for j in range(image_side): # Double nested for loop yaay
-        if(not result[i, j].any()):
+        if(not result[i, j, :].any()):
             print(i, j)
-            res = np.dot(h_inv, np.array([i, j, 1]).reshape(3,1))
+            res = np.dot(h_inv, np.array([j, i, 1]).reshape(3,1))
 
 
             print(np.array([(res[0]/res[2]), (res[1]/res[2])]))
-            quadrant = np.array([-np.floor((res[1]/res[2]) / image_side), -np.floor((res[0]/res[2]) / image_side)]).astype(int).flatten()
+            quadrant = np.array([np.floor((res[1]/res[2]) / image_side), np.floor((res[0]/res[2]) / image_side)]).astype(int).flatten()
             print(quadrant)
             new_image_coords = [
                 min_lat - vertical_margin + image_size*-quadrant[0],
@@ -205,18 +209,28 @@ for i in range(image_side):
 
             translation_matrix = np.array(
                 [
-                    [1, 0, image_side*quadrant[0]],
-                    [0, 1, image_side*quadrant[1]],
+                    [1, 0, image_side*quadrant[1]],
+                    [0, 1, image_side*quadrant[0]],
                     [0, 0, 1]
                 ]
             )
 
-            cv2.imshow("ImageResult4", new_image)
+            # cv2.imshow("ImageResult4", new_image)
 
-            image3 = cv2.warpPerspective(new_image, np.dot(h, translation_matrix), (image_side,image_side))
-            cv2.imshow("ImageResult3", image3)
-            cv2.waitKey()
-            exit()
+            mask = np.ones((image_side, image_side), np.uint8)
+
+            warped_new_image = cv2.warpPerspective(new_image, np.dot(h, translation_matrix), (image_side, image_side))
+            warped_mask = cv2.warpPerspective(mask, np.dot(h, translation_matrix), (image_side, image_side))
+
+            cv2.imshow("mask", warped_mask*255)
+
+            warped_mask[horizon_mask == 1] = 0
+
+            result[warped_mask == 1] = warped_new_image[warped_mask == 1]
+
+            cv2.imshow("Result", result)
+            if cv2.waitKey(1) == ord('q'):
+                exit()
             
 
 
