@@ -138,7 +138,7 @@ print()
 h, status = cv2.findHomography(image_coords, target_points)
 h_inv = np.linalg.inv(h)
 
-## GET HORIZON (Si angleX és 0 està al mig de la pantalla)
+## GET HORIZON
 # horizon_level = image_side - int(image_side/2 - (angle[0]/MAX_ANGLE*image_side))
 cantonades_finals = cv2.perspectiveTransform(np.array([np.array([[0,0],[0, image_side-1],[image_side-1, image_side-1],[image_side-1, 0]]).astype(np.float32)]), h)[0]
 # print(cantonades_finals)
