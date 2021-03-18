@@ -10,9 +10,19 @@
 \usepackage{lettrine}
 \usepackage{hyperref}
 \usepackage{enumitem}
+\usepackage{pgfgantt}
+\usepackage{needspace}
 \usepackage[top=2cm, bottom=1.5cm, left=2cm, right=2cm]{geometry}
 \usepackage[figurename=Fig.,tablename=TAULA]{caption}
 \captionsetup[table]{textfont=sc}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=black,      
+    urlcolor=blue,
+    citecolor=black
+}
 
 \author{\LARGE\sffamily Narcís Nogué Bonet}
 \title{\Huge{\sffamily Aterratge autònom d'avions model basat en visió}}
@@ -73,17 +83,17 @@
 \parbox{0.915\textwidth}
 {\sffamily
 \textbf{Introducció--}
-Com indica el títol, el meu Treball de Final de Grau consisteix en crear un
+Com indica el títol, el meu Treball de Final de Grau consisteix a crear un
 sistema de control autònom que sigui capaç d'aterrar un avió en una pista
 d'aterratge utilitzant únicament una càmera i altres sensors bàsics com
 acceleròmetres i giroscopis. Actualment la majoria de sistemes d'aterratge
 autònom necessiten modificacions substancials de la pista d'aterratge per instal·lar
 un sistema ILS (Instrument Landing System), dissenyat per permetre a una aeronau
-aterrar de nit o en baixa visibilitat. Tot i així, hi ha un subgrup important dels
+aterrar de nit o en baixa visibilitat. Tot i això, hi ha un subgrup important dels
 aeroports que segueixen les normes VFR (Visual Flight Rules), on només es pot
-aterrar de dia i quan la visibilitat sigui suficient, ja que la única informació
+aterrar de dia i quan la visibilitat sigui suficient, ja que l'única informació
 que té el pilot és el contacte visual directe de la pista d'aterratge. La
-majoria d'aeroports petits, aeròdroms i pistes de montanya cauen en aquesta categoria,
+majoria d'aeroports petits, aeròdroms i pistes de muntanya cauen en aquesta categoria,
 i per tant l'aterratge autònom per mètodes convencionals hi és de moment impossible.
 La solució que proposo deriva directament d'aquesta restricció: si la majoria
 de pistes d'aterratge estan pensades i dissenyades per a vol visual, un sistema
@@ -112,7 +122,7 @@ autònom i genèric.
 \section{Objectius}
 
 \lettrine[lines=3]{P}{er} la naturalesa del projecte, els objectius del meu Treball de Final de Grau poden
-augmentar en complexitat molt ràpidament, i per tant els dividiré en dues seccions: els objectius necessàris per tenir un
+augmentar en complexitat molt ràpidament, i per tant els dividiré en dues seccions: els objectius necessaris per tenir un
 MVP (Minimum Viable Product), i la resta d'objectius opcionals per seguir expandint el projecte més enllà.
 
 Objectius per a un MVP:
@@ -121,16 +131,16 @@ Objectius per a un MVP:
   \item Dissenyar una simulació prou acurada d'un cas genèric d'aterratge, sobre la qual poder provar els algoritmes de control i de detecció de la pista.
   \item Dissenyar i implementar una xarxa neuronal capaç de reconèixer qualsevol pista d'aterratge sobre la qual hagi estat entrenada directament.
 \end{itemize}
-Objectius adicionals:
+Objectius addicionals:
 \begin{itemize}
-\item Construïr un avió model capaç d'aterrar de forma autònoma a una pista d'aterratge.
-\item Dissenyar i implementar una xarxa neuronal capaç de reconèixer qualsevol pista d'aterratge que no hagi vist prèvament.
+\item Construir un avió model capaç d'aterrar de forma autònoma a una pista d'aterratge.
+\item Dissenyar i implementar una xarxa neuronal capaç de reconèixer qualsevol pista d'aterratge que no hagi vist prèviament.
 \end{itemize}
 
 \section{Estat de l'art}
 
 En la introducció ja he parlat una mica de com funciona l'aterratge autònom avui en dia, en aquesta secció entraré més en detall
-sobre els sistemes ILS i faré una ullada a altres projectes similars al meu i com han resolt els problemes que se'm presenten.
+sobre els sistemes ILS i donaré una ullada a altres projectes similars al meu i com han resolt els problemes que se'm presenten.
 
 \subsection{El sistema ILS}
 \label{subsec-ils-system}
@@ -143,7 +153,7 @@ les categories II i III es consideren suficients per a aterratges automàtics.
 
 Pel que fa al funcionament, un ILS consisteix en dos transmissors de ràdio situats
 a la pista d'aterratge. Un és el localitzador o \textit{localizer} (LOC), que 
-indiquen la direcció de la pista (en la figura \ref{fig-ils-loc} es mostra la pista i la
+indiquen la direcció de la pista (en la figura \ref{fig-ils-loc} es mostren la pista i la
 senyal de ràdio vistes des de sobre).
 
 
@@ -168,61 +178,13 @@ pista d'aterratge i la senyal de ràdio vistes de perfil).
 
 El sistema ILS funciona bé i és molt robust, però necessita que les antenes de ràdio
 a la pista estiguin instal·lades i funcionin correctament, i avui en dia només els
-aeroports i aeròdroms amb més transit solen tenir aquest sistema, les pistes més petites i els aeròdroms en llocs remots solen quedar fora de l'equació pel que fa a aterratges
+aeroports i aeròdroms amb més trànsit solen tenir aquest sistema, les pistes més petites i els aeròdroms en llocs remots solen quedar fora de l'equació pel que fa a aterratges
 amb ILS.
 
-\subsection{Un altre exemple de subsecció}
-\label{subsec-exemple2}
-
-La taula \ref{tab:senzilla} és un exemple de taula senzilla. En canvi, la taula \ref{tab:taula2} és més completa.
-
-Hi ha moltes referències \textit{on-line} de \LaTeX, com.
-
-% Utilitzeu el begin table només en cas de vole taules flotants. Si les voleu al lloc, tabular directament.
-\begin{table}
-\caption{Taula d'exemple}
-\label{tab:senzilla}
-\begin{center}
-\begin{tabular}{|c|c|}
-\hline
-One & Two\\
-\hline
-Three & Four\\
-\hline
-\end{tabular}
-\end{center}
-\end{table}
-
-
-
-\begin{table}
-\caption{Taula més completa}
-\label{tab:taula2}
-
-\begin{center}
-\begin{tabular}{ |l|l|l| }
-\hline
-\multicolumn{3}{ |c| }{Team sheet} \\
-\hline
-Goalkeeper & GK & Paul Robinson \\ \hline
-\multirow{4}{*}{Defenders} & LB & Lucus Radebe \\
- & DC & Michael Duburry \\
- & DC & Dominic Matteo \\
- & RB & Didier Domi \\ \hline
-\multirow{3}{*}{Midfielders} & MC & David Batty \\
- & MC & Eirik Bakke \\
- & MC & Jody Morris \\ \hline
-Forward & FW & Jamie McMaster \\ \hline
-\multirow{2}{*}{Strikers} & ST & Alan Smith \\
- & ST & Mark Viduka \\
-\hline
-\end{tabular}
-\end{center}
-\end{table}
 
 \section{Planificació}
 
-En aquesta secció desciuré la planificació que vull seguir durant tot el
+En aquesta secció descriuré la planificació que vull seguir durant tot el
 projecte i el procés que he seguit per arribar-hi a través del mètode
 PERT \cite{PERT}.
 
@@ -255,7 +217,7 @@ necessàries en una estructura jeràrquica de dos nivells:
     \begin{enumerate}[label*=\arabic*.]
         \item Integrar lògica de control sobre la simulació.
     \end{enumerate}
-    \item Investigar integració arduino amb hardware tipic d'avions radiocontrol.
+    \item Investigar integració arduino amb hardware típic d'avions radiocontrol.
     \item Construir un avió model pathfinder.
     \begin{enumerate}[label*=\arabic*.]
         \item Investigar sobre construcció d'avions model.
@@ -273,87 +235,253 @@ necessàries en una estructura jeràrquica de dos nivells:
     \item Provar el model sobre una pista d'aterratge real.
     \begin{enumerate}[label*=\arabic*.]
         \item Sobrevolar la pista controlant l'avió manualment i recopilar les dades necessàries per a poder analitzar les decisions del model després del vol.
-        \item Provar l'estabilitat de vol en ràfagues curtes de vol autònom.
+        \item Provar l'estabilitat de vol en ràfegues curtes de vol autònom.
         \item Provar aproximacions autònomes i prendre control just abans de l'aterratge.
         \item Provar un aterratge complet.
     \end{enumerate}
     \item Ampliar la xarxa neuronal perquè l'avió pugui aterrar en qualsevol aeroport.
 \end{enumerate}
 
+\subsection{Diagrama de Gantt}
 
-\subsection {Assignació de temps per tasca (PERT)}
+Un cop definides totes les tasques les organitzaré en un diagrama de Gantt \cite{Gantt} per poder veure fàcilment la relació que tenen entre elles i el marge de temps que tindré per a realitzar-les.  La figura \ref{fig-gantt} mostra el diagrama de Gantt complet, podem veure que les tasques estan organitzades per setmanes, i hi ha 4 milestones marcades corresponents a les 4 entregues que hauré de fer. També indica el progrés de cada tasca, i per tant aniré actualitzant aquest diagrama a mesura que avanci el projecte.
 
-\begin{table}
-\caption{Assignació de temps (en hores)}
-\label{tab:taulaTemps}
+Aquest diagrama ha estat creat a partir d'aquesta plantilla \cite{GanttLatex} d'Overleaf.
 
-\begin{center}
-\begin{tabular}{ |c|c|c|c|c| }
-\hline
-     & To & Tn & Tp & T$\gamma$ \\ \hline
-     1   & 5  & 8  & 10 &    \\ \hline
-     \hline
-     2.1 & 1  & 2  & 3  & 2  \\ \hline
-     2.2 & 3  & 5  & 8  &    \\ \hline
-     2.3 & 1  & 1  & 2  &    \\ \hline
-     \hline
-     3.1 & 5  & 8  & 12 &    \\ \hline
-     3.2 & 8  & 10 & 15 &    \\ \hline
-     3.3 & 10 & 12 & 18 &    \\ \hline
-     \hline
-     4.1 & 2  & 3  & 5  &    \\ \hline
-     4.2 & 3  & 4  & 6  &    \\ \hline
-     4.3 & 5  & 6  & 8  &    \\ \hline
-     \hline
-     5.1 & 2  & 3  & 5  &    \\ \hline
-     \hline
-     6   & 3  & 5  & 8  &    \\ \hline
-     \hline
-     7.1 & 3  & 5  & 8  &    \\ \hline
-     7.2 & 5  & 6  & 8  &    \\ \hline
-     7.3 & 5  & 6  & 8  &    \\ \hline
-     7.4 & 4  & 5  & 7  &    \\ \hline
-     \hline
-     8.1 & 2  & 3  & 5  &    \\ \hline
-     8.2 & 2  & 3  & 5  &    \\ \hline
-     8.3 & 4  & 5  & 8  &    \\ \hline
-     \hline
-     9   & 6  & 8  & 12 &    \\ \hline
-     \hline
-    10.1 & 5  & 8  & 12 &    \\ \hline
-    10.2 & 5  & 8  & 12 &    \\ \hline
-    10.3 & 5  & 8  & 12 &    \\ \hline
-     \hline
-     11 & 10 & 15 & 25 &    \\ \hline
-\end{tabular}
-\end{center}
-\end{table}
+Per comentar una mica l'organització de les tasques, podem veure que hi ha tres fronts principals que es poden fer en paral·lel: la implementació de la xarxa neuronal, la implementació d'una simulació completa on poder fer tests i la creació d'un model físic on poder integrar tot el sistema, i tots tres blocs s'ajunten en les tasques 5 i 9. Tot i que es fan en paral·lel prioritzaré la implementació en software, ja que és el que constitueix el meu Minimum Viable Product, i per tant he reservat més temps del que considero necessari per a la creació de l'avió model, de manera que hi puc dedicar menys temps setmanalment al principi del projecte.
 
-\section{Conclusions}
 
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
+% ######################### DIAGRAMA DE GANTT ############################
+\definecolor{barblue}{RGB}{153,204,254}
+\definecolor{groupblue}{RGB}{51,102,254}
+\definecolor{linkred}{RGB}{165,0,33}
+\renewcommand\sfdefault{phv}
+\renewcommand\mddefault{mc}
+\renewcommand\bfdefault{bc}
+\setganttlinklabel{s-s}{}
+\setganttlinklabel{f-s}{}
+\setganttlinklabel{f-f}{}
+\sffamily
+\begin{figure*}[!h]
+\begin{ganttchart}[
+    y unit chart=.75cm,
+    canvas/.append style={fill=none, draw=black!5, line width=.75pt},
+    hgrid style/.style={draw=black!5, line width=.75pt},
+    vgrid={*1{draw=black!5, line width=.75pt}},
+    today label font=\small\bfseries,
+    title/.style={draw=none, fill=none},
+    title label font=\bfseries\footnotesize,
+    title label node/.append style={below=7pt},
+    include title in canvas=false,
+    bar label font=\mdseries\small\color{black!70},
+    bar label node/.append style={left=2cm},
+    bar/.append style={draw=none, fill=black!63},
+    bar incomplete/.append style={fill=barblue},
+    bar progress label font=\mdseries\footnotesize\color{black!70},
+    group incomplete/.append style={fill=groupblue},
+    group left shift=0,
+    group right shift=0,
+    group height=.5,
+    group peaks tip position=0,
+    group label node/.append style={left=.6cm},
+    group progress label font=\bfseries\small,
+    link/.style={-latex, line width=1.5pt, linkred},
+    link label font=\scriptsize\bfseries,
+    link label node/.append style={below left=-2pt and 0pt}
+  ]{1}{19}
+  \gantttitle[
+    title label node/.append style={below left=7pt and -3pt}
+  ]{Setmanes:\quad1}{1}
+  \gantttitlelist{2,...,19}{1} \\
+  
+  % 1 ----------------------------------------------------------
+  \ganttgroup[progress=100]{1.Planificar el projecte}{1}{4} \\
+  
+  % 2 ----------------------------------------------------------
+  \ganttgroup[progress=100]{2.Investigar possibles solucions}{1}{4} \\
+  \ganttbar[
+    progress=100,
+    name=WBS2A
+  ]{\textbf{2.1} Recopilar possibles solucions}{1}{2} \\
+  \ganttbar[
+    progress=100,
+    name=WBS2B
+  ]{\textbf{2.2} Investigar pros i contres}{3}{3} \\
+  \ganttbar[
+    progress=100,
+    name=WBS2C
+  ]{\textbf{2.3} Escollir models}{4}{4} \\
+  
+  % 3 ----------------------------------------------------------
+  \ganttgroup[progress=40]{3. Implementar solucions per a una sola pista}{5}{10} \\
+  \ganttbar[
+    progress=60,
+    name=WBS3A
+  ]{\textbf{3.1} Crear dataset}{5}{6} \\
+  \ganttbar[
+    progress=50,
+    name=WBS3B
+  ]{\textbf{3.2} Implementar algoritme d'entrenament}{7}{9} \\
+  \ganttbar[
+    progress=10,
+    name=WBS3C
+  ]{\textbf{3.3} Provar model}{10}{10} \\
+  
+  % 4 ----------------------------------------------------------
+  \ganttgroup[progress=15]{4.Implementar simulació completa}{1}{3} \\
+  \ganttbar[
+    progress=100,
+    name=WBS4A
+  ]{\textbf{4.1} Recopilar possibles solucions}{1}{1} \\
+  \ganttbar[
+    progress=10,
+    name=WBS4B
+  ]{\textbf{4.2} Implementar simulació de terreny}{2}{3} \\
+  \ganttbar[
+    progress=0,
+    name=WBS4C
+  ]{\textbf{4.3} Implementar simulació avió}{2}{3} \\
+  
+  % 5 ----------------------------------------------------------
+  \ganttgroup[
+    progress=0,
+    name=5
+  ]{5.Provar model sobre la simulació i ajustar-lo}{11}{12} \\
+  
+  % 6 ----------------------------------------------------------
+  \ganttgroup[
+    progress=90,
+    name=6
+  ]{6.Investigar integració arduino amb avió rc}{1}{1} \\
+  
+  % 7 ----------------------------------------------------------
+  \ganttgroup[
+    progress=20
+  ]{7.Crear avió pathfinder}{1}{9} \\
+  \ganttbar[
+    progress=100,
+    name=WBS7A
+  ]{\textbf{7.1} Investigar sobre avions radiocontrol}{1}{2} \\
+  \ganttbar[
+    progress=10,
+    name=WBS7B
+  ]{\textbf{7.2} Construir estructura principal}{3}{4} \\
+  \ganttbar[
+    progress=0,
+    name=WBS7C
+  ]{\textbf{7.3} Construir electrònica del model}{5}{7} \\
+  \ganttbar[
+    progress=0,
+    name=WBS7D
+  ]{\textbf{7.4} Proves inicials de vol}{8}{9} \\
+  
+  % 8 ----------------------------------------------------------
+  \ganttgroup[
+    progress=0
+  ]{8.Construir avió definitiu}{10}{12} \\
+  \ganttbar[
+    progress=0,
+    name=WBS8A
+  ]{\textbf{8.1} Construir estructura principal}{10}{10} \\
+  \ganttbar[
+    progress=10,
+    name=WBS8B
+  ]{\textbf{8.2} Construir electrònica del model}{11}{11} \\
+  \ganttbar[
+    progress=0,
+    name=WBS8C
+  ]{\textbf{8.3} Integrar hardware}{12}{12} \\
+  
+  % 9 ----------------------------------------------------------
+  \ganttgroup[
+    progress=0,
+    name=9
+  ]{9.Implementar Xarxa Neuronal en el model}{13}{13} \\
+  
+  % 10 ----------------------------------------------------------
+  \ganttgroup[
+    progress=0
+  ]{10.Provar model sobre una pista d'aterratge real}{14}{15} \\
+  \ganttbar[
+    progress=0,
+    name=WBS10A
+  ]{\textbf{10.1} Sobrevolar}{14}{14} \\
+  \ganttbar[
+    progress=0,
+    name=WBS10B
+  ]{\textbf{10.2} Ràfagues curted de vol autònom}{14}{14} \\
+  \ganttbar[
+    progress=0,
+    name=WBS10C
+  ]{\textbf{10.3} Aproximacions completes}{15}{15} \\
+  \ganttbar[
+    progress=0,
+    name=WBS10D
+  ]{\textbf{10.4} Aterratge complet}{15}{15} \\
+  
+  % 11 ----------------------------------------------------------
+  \ganttgroup[
+    progress=0,
+    name=11
+  ]{11.Ampliar la xarxa neuronal}{16}{17} \\
+  
+  \ganttlink[link type=f-s]{WBS2A}{WBS2B}
+  \ganttlink[link type=f-s]{WBS2B}{WBS2C}
+  
+  \ganttlink[link type=f-s]{WBS2C}{WBS3A}
+  \ganttlink[link type=f-s]{WBS3A}{WBS3B}
+  \ganttlink[link type=f-s]{WBS3B}{WBS3C}
+  
+  \ganttlink[link type=f-s]{WBS4A}{WBS4B}
+  \ganttlink[link type=f-s]{WBS4A}{WBS4C}
+  
+  \ganttlink[link type=f-s]{WBS3C}{5}
+  \ganttlink[link type=f-s]{WBS4C}{5}
+  
+  \ganttlink[link type=f-s]{WBS7A}{WBS7B}
+  \ganttlink[link type=f-s]{WBS7B}{WBS7C}
+  \ganttlink[link type=f-s]{WBS7C}{WBS7D}
+  
+  \ganttlink[link type=f-s]{WBS7D}{WBS8A}
+  \ganttlink[link type=f-s]{WBS8A}{WBS8B}
+  \ganttlink[link type=f-s]{WBS8B}{WBS8C}
+  
+  \ganttlink[link type=f-s]{WBS8C}{9}
+  
+  \ganttlink[link type=f-s]{9}{WBS10A}
+  \ganttlink[link type=s-s]{WBS10A}{WBS10B}
+  \ganttlink[link type=f-s]{WBS10B}{WBS10C}
+  \ganttlink[link type=s-s]{WBS10C}{WBS10D}
+  
+  \ganttlink[link type=f-s]{WBS10D}{11}
+  
+  \ganttlink[link type=f-s]{5}{9}
+  
+  \ganttvrule{Informe 1}{4}
+  \ganttvrule{Progrés(I)}{9}
+  \ganttvrule{Progrés(II)}{14}
+  \ganttvrule{Final}{17}
+  
+  
+\end{ganttchart}
+\caption{Diagrama de Gantt del projecte}
+\label{fig-gantt}
+\end{figure*}
 
-\section*{Agraïments}
+\Needspace{10\baselineskip}
+\section{Metodologia}
+Per facilitar-me la feina en tot aquest projecte utilitzaré dues eines principals:
+\begin{itemize}
+    \item{Github per al control de codi font. Tot el meu projecte estarà en aquest repositori de git:
+    \href{https://github.com/NarcisNogue/Aterratge-automatic-d-avions-model-basat-en-visio}{Aterratge Automàtic basat en visió}, per a poder tenir un històric de tots els canvis que he fet, poder treballar des de diferents ordinadors i poder compartir el projecte fàcilment. L'únic aspecte del treball que segurament hauré d'excloure del git són els datasets per no superar el límit d'emmagatzematge de 10Gb, però els algoritmes de generació de datasets sí que hi seran.}
+    
+    \item{Jira per al control de tasques i del temps. He creat un projecte de Jira i hi he afegit les tasques definides a la planificació del projecte, amb una previsió de temps en hores, i a mesura que les vagi fent apuntaré les hores que dedico a cada tasca per veure si el meu ritme de progrés s'adapta a la meva previsió inicial. També utilitzaré el mètode Pomodoro \cite{Pomodoro} de Francesco Cirillo per a les tasques més demandants com aquelles que siguin purament de programació.}
+\end{itemize}
 
-... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
-.... ..  .... .. .... ... ..... ... ..... ... ... ..... .... .
+Pel que fa a la metodologia de treball, tot el projecte ha quedat repartit en 17 setmanes, i està previst que tot el TFG ocupi al voltant de les 300 hores, per tant cada setmana hauré de dedicar unes 18 hores a treballar. Cada dia de la setmana podré dedicar unes dues hores després de la feina a fer el treball, i per tant els caps de setmana hauria de fer quatre hores cada dia. També he previst una hora de reunió amb el meu tutor cada setmana per comentar el progrés i assegurar que mantinc un bon ritme de treball i comentar la feina de la setmana.
 
+
+% BIBLIOGRAFIA --------------------------------------------------------
 \begin{thebibliography}{9}
 \bibitem{ILS}
 Instrument Landing System (ILS)
@@ -374,6 +502,21 @@ La metodologia PERT
 Work Breakdown Structure
 \\\url{https://www.workbreakdownstructure.com/}
 \\Visitat 1-3-2021
+
+\bibitem{Gantt}
+Diagrama de Gantt en Latex
+\\\url{https://www.gantt.com/}
+\\Visitat 8-3-2021
+
+\bibitem{GanttLatex}
+What is a Gantt Chart?
+\\\url{https://es.overleaf.com/project/6045fda53e80236ed63bee8a}
+\\Visitat 8-3-2021
+
+\bibitem{Pomodoro}
+El mètode Pomodoro
+\\\url{http://www.baomee.info/pdf/technique/1.pdf}
+\\Visitat 8-3-2021
 
 \end{thebibliography}
 
