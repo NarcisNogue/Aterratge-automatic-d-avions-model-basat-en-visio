@@ -42,11 +42,12 @@ def findIntersection(p1,p2,p3,p4):
 ################################### CALCULS INICIALS ####################################################
 #########################################################################################################
 class HomographyCreator:
-    def __init__(self, coordinates, show_image_level, width, length):
+    def __init__(self, coordinates, show_image_level, width, length, image_side=520):
         self.SHOW_IMAGES_LEVEL = show_image_level
         self.LENGTH_PISTA = length
         self.WIDTH_PISTA = width
         self.coordinates = coordinates
+        self.image_side = image_side
         self.cache = {}
 
     def createHomography(self, pos, angle):
@@ -57,7 +58,7 @@ class HomographyCreator:
         min_lat = min(COORDS[:,0])
         min_lon = min(COORDS[:,1])
 
-        image_side = 520
+        image_side = self.image_side
 
         image_size = max((max_lon - min_lon),(max_lat - min_lat))
 
@@ -154,7 +155,7 @@ class HomographyCreator:
         if(point_hor is not False and point_hor[1] < min_Y):
             min_Y = point_ver[1]
 
-        horizon_level = int(max(0, min_Y) + image_side*0.15) # Una mica de marge
+        horizon_level = int(max(0, min_Y) + image_side*0.1) # Una mica de marge
 
         horizon_mask = np.zeros((image_side, image_side), np.uint8)
 
@@ -168,6 +169,9 @@ class HomographyCreator:
         result[0:horizon_level, :, 0] = 255
         result[0:horizon_level, :, 1] = 255
         result[0:horizon_level, :, 2] = 0
+
+        if(self.SHOW_IMAGES_LEVEL > 1):
+            cv2.imshow("ImageInit2", result)
 
         # Importar la resta d'imatges
         for i in range(image_side):
@@ -220,16 +224,18 @@ class HomographyCreator:
 
                     result[warped_mask == 1] = warped_new_image[warped_mask == 1]
 
-                    if(self.SHOW_IMAGES_LEVEL > 2):
-                        cv2.imshow("Result", result)
+                    if(self.SHOW_IMAGES_LEVEL > 0):
+                        cv2.imshow("Loading...", result)
                         if cv2.waitKey(1) == ord('q'):
                             break
                     
 
-        if(self.SHOW_IMAGES_LEVEL > 0):
-            cv2.imshow("ImageResult1", result)
+        if(self.SHOW_IMAGES_LEVEL > 1):
+            for corner in target_points:
+                result2 = cv2.circle(result.copy(), (corner[0], corner[1]), 5, (0,255,0), -1)
+            cv2.imshow("ImageResult1", result2)
             cv2.waitKey()
-        return result, cantonades_finals
+        return result, target_points
 
 if(__name__ == "__main__"):
     homographyService = HomographyCreator([
@@ -238,4 +244,4 @@ if(__name__ == "__main__"):
             [41.62692006354912, 2.251237060701778], #Lluny dreta
             [41.626875454201034, 2.2510969152827487] #Lluny esquerra
         ], 3, 11.74, 50)
-    resultImage, coords = homographyService.createHomography([-5, -50, 15], [-10, 0, 0])
+    resultImage, coords = homographyService.createHomography([-5, -30, 15], [-10, 0, 0])
