@@ -115,9 +115,8 @@ class HomographyCreator:
             [0, self.LENGTH_PISTA, 0]
         ])
 
-        # pos = (-30, -50, 30) #m (x, y, z)
 
-        # angle = (-30, 0, 20) #º (de moment ignoraré el y... TODO i guess)
+        # TODO: La X no es calcula be
 
         # GET COORDINATES DE LES CANTONADES
         angles_cantonades = np.zeros((4,2))
@@ -200,7 +199,6 @@ class HomographyCreator:
                         if(not quadrant[0] in self.cache.keys()):
                             self.cache[quadrant[0]] = {}
                         self.cache[quadrant[0]][quadrant[1]] = new_image
-                        print("call")
 
 
                     translation_matrix = np.array(
@@ -241,4 +239,3 @@ if(__name__ == "__main__"):
             [41.626875454201034, 2.2510969152827487] #Lluny esquerra
         ], 3, 11.74, 50)
     resultImage, coords = homographyService.createHomography([-5, -50, 15], [-10, 0, 0])
-    resultImage, coords = homographyService.createHomography([-20, -50, 15], [-40, 0, 20])
