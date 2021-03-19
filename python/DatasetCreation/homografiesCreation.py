@@ -114,9 +114,10 @@ class HomographyCreator:
             [0, 0, 1]
         ])
 
-        for cant, angle_c in zip(COORDS_PISTA_MON, angles_cantonades):
-            angle_c[0] = math.atan2(-cant[2] + pos[2], math.sqrt((cant[1] - pos[1])**2 + (cant[0] - pos[0])**2))*180/math.pi + angle[0] #Y
-            angle_c[1] = math.atan2(cant[0] - pos[0], cant[1] - pos[1])*180/math.pi - angle[2] #X
+        for cant, angle_c in zip(COORDS_PISTA_MON, angles_cantonades): # No calcula be la y quan esta darrere la camera / sota la pantalla
+            y_correction = 1#((cant[1] - pos[1]) > 0)*2-1
+            angle_c[0] = np.degrees(math.atan2(-cant[2] + pos[2], y_correction*math.sqrt((cant[1] - pos[1])**2 + (cant[0] - pos[0])**2)))+ angle[0] #Y
+            angle_c[1] = np.degrees(math.atan2(cant[0] - pos[0], cant[1] - pos[1]))- angle[2] #X
 
         target_points = np.zeros((4,2)).astype(int)
 
@@ -141,8 +142,8 @@ class HomographyCreator:
         m, c = line_eq(point_1, point_2)
 
         #Mirar si el terra esta a sota o a sobre l'horitzó
-        isUnder = (target_points[0][1]*m + c > target_points[0][0])*2 - 1
-        c -= image_side*0.05*isUnder
+        isUnder = (target_points[0][0]*m + c > target_points[0][1])*2 - 1
+        c -= image_side*0.05*isUnder/math.cos(np.radians(angle_c[1]))
 
         horizon_mask = np.fromfunction(lambda i, j: isUnder*(m*j + c) < isUnder*i, (image_side, image_side), dtype=int)
         
@@ -232,4 +233,4 @@ if(__name__ == "__main__"):
             [41.62692006354912, 2.251237060701778], #Lluny dreta
             [41.626875454201034, 2.2510969152827487] #Lluny esquerra
         ], 3, 11.74, 50)
-    resultImage, coords = homographyService.createHomography([-5, -30, 15], [-10, 0, 0])
+    resultImage, coords = homographyService.createHomography([-5, 100, 15], [-10, 0, 180])

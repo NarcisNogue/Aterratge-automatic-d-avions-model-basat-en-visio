@@ -20,7 +20,7 @@ pos_x = -width/2
 pos_y = -20
 pos_z = 15
 
-angle_x = -10
+angle_x = -11
 angle_y = 0
 angle_z = 0
 
@@ -40,7 +40,6 @@ while True:
     cv2.imshow("Result with mask", masked_result)
     cv2.imshow("Result", result)
 
-
     key = cv2.waitKey()
     if(key == ord('q')):
         angle_y += delta_angle
@@ -56,7 +55,6 @@ while True:
         angle_z -= delta_pos
     elif(key == ord('l')):
         angle_z += delta_pos
-
 
     # Les posicions son en coordenades globals, ja ho cambiare
     elif(key == ord('w')):
@@ -75,10 +73,9 @@ while True:
 
     elif(key == ord(' ')):
         pos_z += delta_pos
-    elif(key == ord('z')): #Shift
+    elif(key == ord('z')):
         pos_z -= delta_pos
 
-    
     #Tecles especials
     elif(key == 27): #ESC
         break
