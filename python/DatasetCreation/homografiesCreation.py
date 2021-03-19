@@ -4,23 +4,6 @@ import math
 import numpy as np
 
 service = ICGCService()
-
-#########################################################################################################
-################################### VARIABLES GLOBALS ###################################################
-#########################################################################################################
-
-# COORDS = np.array([
-#             [41.62778728171866, 2.2506523362405804], #A prop dreta
-#             [41.62782537455772, 2.250786446689412], #A prop esquerra
-#             [41.62692006354912, 2.251237060701778], #Lluny dreta
-#             [41.626875454201034, 2.2510969152827487] #Lluny esquerra
-#         ])
-
-# Rotar la imatge de manera que encari la pista d'aterratge
-
-# rot_angle = - math.atan2(COORDS[0][0] - COORDS[3][0], COORDS[3][1] - COORDS[0][1])*180/math.pi - 90
-# print(rot_angle)
-
 #########################################################################################################
 ################################### FUNCIONS GLOBALS ####################################################
 #########################################################################################################
@@ -34,7 +17,6 @@ def findIntersection(p1,p2,p3,p4):
     x4 = p4[0]
     y4 = p4[1]
     t = (((x1-x3)*(y3-y4)-(y1-y3)*(x3-x4)))/(((x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)))
-    print(t)
     px = x1 + t*(x2-x1)
     py = y1 + t*(y2-y1)
     return [px, py]
@@ -157,8 +139,6 @@ class HomographyCreator:
         point_2 = findIntersection(cantonades_finals[0], cantonades_finals[1], cantonades_finals[3], cantonades_finals[2])
 
         m, c = line_eq(point_1, point_2)
-
-        print("Line Solution is y = {m}x + {c}".format(m=m,c=c))
 
         #Mirar si el terra esta a sota o a sobre l'horitzó
         isUnder = (target_points[0][1]*m + c > target_points[0][0])*2 - 1
