@@ -115,15 +115,14 @@ class HomographyCreator:
         ])
 
         for cant, angle_c in zip(COORDS_PISTA_MON, angles_cantonades): # No calcula be la y quan esta darrere la camera / sota la pantalla
-            y_correction = 1#((cant[1] - pos[1]) > 0)*2-1
-            angle_c[0] = np.degrees(math.atan2(-cant[2] + pos[2], y_correction*math.sqrt((cant[1] - pos[1])**2 + (cant[0] - pos[0])**2)))+ angle[0] #Y
-            angle_c[1] = np.degrees(math.atan2(cant[0] - pos[0], cant[1] - pos[1]))- angle[2] #X
+            angle_c[0] = np.degrees(math.atan2(cant[0] - pos[0], cant[1] - pos[1]))- angle[2] #X
+            angle_c[1] = np.degrees(math.atan2(-cant[2] + pos[2],math.sqrt((cant[1] - pos[1])**2 + (cant[0] - pos[0])**2)))+ angle[0] #Y
 
         target_points = np.zeros((4,2)).astype(int)
 
         for target, angle_c in zip(target_points, angles_cantonades):
-            target[0] = int((image_side / 2) + (image_side / 2)/MAX_ANGLE*angle_c[1])
-            target[1] = int((image_side / 2) + (image_side / 2)/MAX_ANGLE*angle_c[0])
+            target[0] = int((image_side / 2) + (image_side / 2)/MAX_ANGLE*angle_c[0])
+            target[1] = int((image_side / 2) + (image_side / 2)/MAX_ANGLE*angle_c[1])
         target_points = np.dot(rotation_m, np.r_[target_points.transpose(), [[1,1,1,1]]]).transpose().astype(int)[:,:2]
 
         h, status = cv2.findHomography(image_coords, target_points)
