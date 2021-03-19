@@ -4,23 +4,6 @@ import math
 import numpy as np
 
 service = ICGCService()
-
-#########################################################################################################
-################################### VARIABLES GLOBALS ###################################################
-#########################################################################################################
-
-# COORDS = np.array([
-#             [41.62778728171866, 2.2506523362405804], #A prop dreta
-#             [41.62782537455772, 2.250786446689412], #A prop esquerra
-#             [41.62692006354912, 2.251237060701778], #Lluny dreta
-#             [41.626875454201034, 2.2510969152827487] #Lluny esquerra
-#         ])
-
-# Rotar la imatge de manera que encari la pista d'aterratge
-
-# rot_angle = - math.atan2(COORDS[0][0] - COORDS[3][0], COORDS[3][1] - COORDS[0][1])*180/math.pi - 90
-# print(rot_angle)
-
 #########################################################################################################
 ################################### FUNCIONS GLOBALS ####################################################
 #########################################################################################################
@@ -33,20 +16,25 @@ def findIntersection(p1,p2,p3,p4):
     y3 = p3[1]
     x4 = p4[0]
     y4 = p4[1]
-    if(( (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4) ) == 0 or ( (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4) ) == 0):
-        return False
-    px= ( (x1*y2-y1*x2)*(x3-x4)-(x1-x2)*(x3*y4-y3*x4) ) / ( (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4) ) 
-    py= ( (x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4) ) / ( (x1-x2)*(y3-y4)-(y1-y2)*(x3-x4) )
+    t = (((x1-x3)*(y3-y4)-(y1-y3)*(x3-x4)))/(((x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)))
+    px = x1 + t*(x2-x1)
+    py = y1 + t*(y2-y1)
     return [px, py]
+
+def line_eq(p1, p2):
+    m = ((p2[1] - p1[1])) / (p2[0] - p1[0])
+    c = (p2[1] - (m * p2[0]))
+    return m, c
 #########################################################################################################
 ################################### CALCULS INICIALS ####################################################
 #########################################################################################################
 class HomographyCreator:
-    def __init__(self, coordinates, show_image_level, width, length):
+    def __init__(self, coordinates, show_image_level, width, length, image_side=520):
         self.SHOW_IMAGES_LEVEL = show_image_level
         self.LENGTH_PISTA = length
         self.WIDTH_PISTA = width
         self.coordinates = coordinates
+        self.image_side = image_side
         self.cache = {}
 
     def createHomography(self, pos, angle):
@@ -57,7 +45,7 @@ class HomographyCreator:
         min_lat = min(COORDS[:,0])
         min_lon = min(COORDS[:,1])
 
-        image_side = 520
+        image_side = self.image_side
 
         image_size = max((max_lon - min_lon),(max_lat - min_lat))
 
@@ -115,21 +103,27 @@ class HomographyCreator:
             [0, self.LENGTH_PISTA, 0]
         ])
 
-
-        # TODO: La X no es calcula be
-
         # GET COORDINATES DE LES CANTONADES
         angles_cantonades = np.zeros((4,2))
 
-        for cant, angle_c in zip(COORDS_PISTA_MON, angles_cantonades):
-            angle_c[0] = math.atan2(-cant[2] + pos[2], cant[1] - pos[1])*180/math.pi + angle[0]
-            angle_c[1] = math.atan2(cant[0] - pos[0], cant[1] - pos[1])*180/math.pi - angle[2]
+        angle_y = np.radians(angle[1])
+        t = image_side/2
+        rotation_m = np.array([
+            [math.cos(angle_y), -math.sin(angle_y), -t*math.cos(angle_y)+t*math.sin(angle_y)+t],
+            [math.sin(angle_y), math.cos(angle_y), -t*math.sin(angle_y)-t*math.cos(angle_y)+t],
+            [0, 0, 1]
+        ])
+
+        for cant, angle_c in zip(COORDS_PISTA_MON, angles_cantonades): # No calcula be la y quan esta darrere la camera / sota la pantalla
+            angle_c[0] = np.degrees(math.atan2(cant[0] - pos[0], cant[1] - pos[1]))- angle[2] #X
+            angle_c[1] = np.degrees(math.atan2(-cant[2] + pos[2],math.sqrt((cant[1] - pos[1])**2 + (cant[0] - pos[0])**2)))+ angle[0] #Y
 
         target_points = np.zeros((4,2)).astype(int)
 
         for target, angle_c in zip(target_points, angles_cantonades):
-            target[0] = int((image_side / 2) + (image_side / 2)/MAX_ANGLE*angle_c[1])
-            target[1] = int((image_side / 2) + (image_side / 2)/MAX_ANGLE*angle_c[0])
+            target[0] = int((image_side / 2) + (image_side / 2)/MAX_ANGLE*angle_c[0])
+            target[1] = int((image_side / 2) + (image_side / 2)/MAX_ANGLE*angle_c[1])
+        target_points = np.dot(rotation_m, np.r_[target_points.transpose(), [[1,1,1,1]]]).transpose().astype(int)[:,:2]
 
         h, status = cv2.findHomography(image_coords, target_points)
         h_inv = np.linalg.inv(h)
@@ -137,37 +131,34 @@ class HomographyCreator:
         ## GET HORIZON
         # horizon_level = image_side - int(image_side/2 - (angle[0]/MAX_ANGLE*image_side))
         cantonades_finals = cv2.perspectiveTransform(np.array([np.array([[0,0],[0, image_side-1],[image_side-1, image_side-1],[image_side-1, 0]]).astype(np.float32)]), h)[0]
-        # print(cantonades_finals)
-        # pendents = []
-        # for i in range(4):
-        #     pendents.append((cantonades_finals[(i+1)%4][1] - cantonades_finals[i][1])/(cantonades_finals[(i+1)%4][0] - cantonades_finals[i][0]))
-        # print(pendents)
 
-        max_Y = float('inf')
         ## Interseccions Rectes verticals (1->2 i 0->3)
-        point_ver = findIntersection(cantonades_finals[1], cantonades_finals[2], cantonades_finals[0], cantonades_finals[3])
-        if(point_ver is not False):
-            min_Y = point_ver[1]
+        point_1 = findIntersection(cantonades_finals[1], cantonades_finals[2], cantonades_finals[0], cantonades_finals[3])
 
         ## Interseccions Rectes horitzontals (0->1 i 3->2)
-        point_hor = findIntersection(cantonades_finals[0], cantonades_finals[1], cantonades_finals[3], cantonades_finals[2])
-        if(point_hor is not False and point_hor[1] < min_Y):
-            min_Y = point_ver[1]
+        point_2 = findIntersection(cantonades_finals[0], cantonades_finals[1], cantonades_finals[3], cantonades_finals[2])
 
-        horizon_level = int(max(0, min_Y) + image_side*0.15) # Una mica de marge
+        m, c = line_eq(point_1, point_2)
 
-        horizon_mask = np.zeros((image_side, image_side), np.uint8)
+        #Mirar si el terra esta a sota o a sobre l'horitzó
+        isUnder = (target_points[0][0]*m + c > target_points[0][1])*2 - 1
+        c -= image_side*0.05*isUnder/math.cos(np.radians(angle_c[1]))
 
-        horizon_mask[0:horizon_level, :] = 1
-
+        horizon_mask = np.fromfunction(lambda i, j: isUnder*(m*j + c) < isUnder*i, (image_side, image_side), dtype=int)
+        
+        if(self.SHOW_IMAGES_LEVEL > 2):
+            cv2.imshow("Horizon", horizon_mask.astype(np.uint8)*255)
 
 
         result = cv2.warpPerspective(image, h, (image_side,image_side))
 
         #Pintar horitzó
-        result[0:horizon_level, :, 0] = 255
-        result[0:horizon_level, :, 1] = 255
-        result[0:horizon_level, :, 2] = 0
+        result[horizon_mask, 0] = 255
+        result[horizon_mask, 1] = 255
+        result[horizon_mask, 2] = 0
+
+        if(self.SHOW_IMAGES_LEVEL > 1):
+            cv2.imshow("ImageInit2", result)
 
         # Importar la resta d'imatges
         for i in range(image_side):
@@ -220,16 +211,19 @@ class HomographyCreator:
 
                     result[warped_mask == 1] = warped_new_image[warped_mask == 1]
 
-                    if(self.SHOW_IMAGES_LEVEL > 2):
-                        cv2.imshow("Result", result)
+                    if(self.SHOW_IMAGES_LEVEL > 0):
+                        cv2.imshow("Loading...", result)
                         if cv2.waitKey(1) == ord('q'):
                             break
                     
-
-        if(self.SHOW_IMAGES_LEVEL > 0):
-            cv2.imshow("ImageResult1", result)
+        
+        if(self.SHOW_IMAGES_LEVEL > 1):
+            result2 = result.copy()
+            for corner in target_points:
+                result2 = cv2.circle(result2, (corner[0], corner[1]), 5, (0,255,0), -1)
+            cv2.imshow("ImageResult1", result2)
             cv2.waitKey()
-        return result, cantonades_finals
+        return result, target_points
 
 if(__name__ == "__main__"):
     homographyService = HomographyCreator([
@@ -238,4 +232,4 @@ if(__name__ == "__main__"):
             [41.62692006354912, 2.251237060701778], #Lluny dreta
             [41.626875454201034, 2.2510969152827487] #Lluny esquerra
         ], 3, 11.74, 50)
-    resultImage, coords = homographyService.createHomography([-5, -50, 15], [-10, 0, 0])
+    resultImage, coords = homographyService.createHomography([-5, 100, 15], [-10, 0, 180])
