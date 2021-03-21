@@ -2,6 +2,7 @@
 python/venvs
 Datasets
 *.pyc
+.vscode
 
 
 # Tex

@@ -116,7 +116,8 @@ class HomographyCreator:
 
         for cant, angle_c in zip(COORDS_PISTA_MON, angles_cantonades): # No calcula be la y quan esta darrere la camera / sota la pantalla
             angle_c[0] = np.degrees(math.atan2(cant[0] - pos[0], cant[1] - pos[1]))- angle[2] #X
-            angle_c[1] = np.degrees(math.atan2(-cant[2] + pos[2],math.sqrt((cant[1] - pos[1])**2 + (cant[0] - pos[0])**2)))+ angle[0] #Y
+            angle_c[1] = np.degrees(math.atan2((cant[2] + pos[2]), ((cant[1] - pos[1]) / math.cos(np.radians(angle_c[0]))))) + angle[0] #Y
+            print(angle_c[1])
 
         target_points = np.zeros((4,2)).astype(int)
 
@@ -232,4 +233,4 @@ if(__name__ == "__main__"):
             [41.62692006354912, 2.251237060701778], #Lluny dreta
             [41.626875454201034, 2.2510969152827487] #Lluny esquerra
         ], 3, 11.74, 50)
-    resultImage, coords = homographyService.createHomography([-5, 100, 15], [-10, 0, 180])
+    resultImage, coords = homographyService.createHomography([-5, -30, 15], [-10, 0, 0])
