@@ -17,7 +17,7 @@ width = 11.74
 service = hc(coords, 1, width, length, image_side=256)
 
 pos_x = -width/2
-pos_y = -20
+pos_y = -19
 pos_z = 15
 
 angle_x = -11
