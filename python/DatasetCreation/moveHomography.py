@@ -34,6 +34,9 @@ delta_angle = 2
 
 model = tf.keras.models.load_model('../DatasetAnalysis/Models/ModelTestBlender3.h5')
 
+
+# Fa varies predicions sobre la mateixa imatge  en diferents brillantors. No noto gaire millora contra fer-ho amb una sola imatge, probablement
+# perque es normalitzen totes de 0 a 1 igualment i la diferencia deu ser minima
 while True:
     pos = [pos_x, pos_y, pos_z]
     angle = [angle_x, angle_y, angle_z]
