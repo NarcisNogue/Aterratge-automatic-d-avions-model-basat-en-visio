@@ -1,9 +1,14 @@
 from skimage.draw import polygon2mask, polygon, polygon_perimeter
 from homografiesCreation import HomographyCreator as hc
 from random import uniform
+import tensorflow as tf
 import numpy as np
 import math
 import cv2
+
+def normalize(input_image):
+    input_image = tf.cast(input_image, tf.float32) / 255.0
+    return input_image
 
 coords = [
             [41.62778728171866, 2.2506523362405804], #A prop dreta
@@ -14,7 +19,7 @@ coords = [
 length = 50
 width = 11.74
 
-service = hc(coords, 1, width, length, image_side=256)
+service = hc(coords, 1, width, length, image_side=128)
 
 pos_x = -width/2
 pos_y = -19
@@ -27,13 +32,26 @@ angle_z = 0
 delta_pos = 5
 delta_angle = 2
 
+model = tf.keras.models.load_model('../DatasetAnalysis/Models/ModelTestBlender3.h5')
+
 while True:
     pos = [pos_x, pos_y, pos_z]
     angle = [angle_x, angle_y, angle_z]
     result, cords = service.createHomography(pos, angle)
+    image = np.zeros((0, 128,128,3))
+    for i in [x/10.0 for x in range(3, 18, 2)]:
+        result2 = result*i
+        result2[result2 > 255] = 255
+        result2 = result2.astype(np.uint8)
+        image = np.vstack((image, np.array([normalize(cv2.cvtColor(result2, cv2.COLOR_BGR2RGB))])))
+    
+    pred_mask = model.predict(image)
+
     mask = np.transpose(polygon2mask(result.shape[:-1], cords))
 
-    cv2.imshow("Mask", mask.astype(np.uint8)*255)
+    mean_pred_mask = np.mean(pred_mask, axis=0)
+    cv2.imshow("Predicted Mask", mean_pred_mask)
+    cv2.imshow("True Mask", mask.astype(np.uint8)*255)
     masked_result = result.copy()
     masked_result[mask] = (masked_result[mask] * 0.5).astype(np.uint8)
     masked_result[mask, 2] = 255
