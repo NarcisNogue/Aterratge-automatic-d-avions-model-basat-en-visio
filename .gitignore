@@ -3,6 +3,7 @@ python/venvs
 Datasets
 *.pyc
 .vscode
+Unity
 
 
 # Tex
