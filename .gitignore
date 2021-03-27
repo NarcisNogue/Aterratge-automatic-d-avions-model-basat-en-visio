@@ -3,7 +3,14 @@ python/venvs
 Datasets
 *.pyc
 .vscode
-Unity
+Unity/*
+!Unity/Simulacio Unity
+Unity/Simulacio Unity/*
+!Unity/Simulacio Unity/Assets
+Unity/Simulacio Unity/Assets/*
+
+!Unity/Simulacio Unity/Assets/control_server.py
+!Unity/Simulacio Unity/Assets/plane_control.cs
 
 
 

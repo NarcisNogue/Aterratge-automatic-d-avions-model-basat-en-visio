@@ -22,6 +22,7 @@ while(1):
     if(not ret):
             break
 
+    # frame = cv2.imread(sys.argv[1])
     image = np.array([normalize(cv2.resize(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), (128,128)))])
 
 
@@ -29,7 +30,7 @@ while(1):
     iters = 100
     pred_mask = model.predict(image)
 
-    cv2.imshow("Imatge", image)
+    cv2.imshow("Imatge", frame)
     cv2.imshow("Mask", pred_mask[0])
     key = cv2.waitKey()
     if key == ord("q"):
