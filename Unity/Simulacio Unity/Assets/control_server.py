@@ -70,11 +70,12 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     print("Quitting")
                     break
                 if data == "END_PROGRAM".encode():
+                    print("Oh hey im out")
                     exit()
                 # try:
                 image = np.array(ThumbFromBuffer(data))[:, :, ::-1]
                 # print(image)
-                cv2.imshow("frame", image)
+                cv2.imshow("frame", cv2.resize(image, (1024, 1024)))
                 # except:
                 #     print(np.random.rand())
                 #     pass

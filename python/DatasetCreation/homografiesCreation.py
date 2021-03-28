@@ -37,7 +37,7 @@ class HomographyCreator:
         self.image_side = image_side
         self.cache = {}
 
-    def createHomography(self, pos, angle):
+    def createHomography(self, pos, angle, target_coordinates=None):
         COORDS = np.array(self.coordinates)
         max_lat = max(COORDS[:,0])
         max_lon = max(COORDS[:,1])
@@ -103,31 +103,35 @@ class HomographyCreator:
             [0, self.LENGTH_PISTA, 0]
         ])
 
-        # GET COORDINATES DE LES CANTONADES
-        angles_cantonades = np.zeros((4,2))
+        t = image_side/2
+        if(target_coordinates is None):
+            # GET COORDINATES DE LES CANTONADES
+            angles_cantonades = np.zeros((4,2))
+            distancia_focal = t / math.tan(np.radians(MAX_ANGLE))
+
+            
+
+            for cant, angle_c in zip(COORDS_PISTA_MON, angles_cantonades): # TODO: No calcula be la y quan esta darrere la camera / sota la pantalla
+                angle_c[0] = np.degrees(math.atan2(cant[0] - pos[0], cant[1] - pos[1]))- angle[2] #X
+                angle_c[1] = np.degrees(math.atan2((cant[2] + pos[2]), ((cant[1] - pos[1]) / math.cos(np.radians(angle_c[0]))))) + angle[0] #Y
+            print(angles_cantonades[0][1])
+
+            target_points = np.zeros((4,2)).astype(int)
+
+            for target, angle_c in zip(target_points, angles_cantonades):
+                target[0] = int(t + distancia_focal * math.tan(np.radians(angle_c[0])))
+                target[1] = int(t + distancia_focal * math.tan(np.radians(angle_c[1])))
+            print(target_points[0])
+        else:
+            target_points = target_coordinates
 
         angle_y = np.radians(angle[1])
-        t = image_side/2
-        distancia_focal = t / math.tan(np.radians(MAX_ANGLE))
         rotation_m = np.array([
             [math.cos(angle_y), -math.sin(angle_y), -t*math.cos(angle_y)+t*math.sin(angle_y)+t],
             [math.sin(angle_y), math.cos(angle_y), -t*math.sin(angle_y)-t*math.cos(angle_y)+t],
             [0, 0, 1]
         ])
-
-        for cant, angle_c in zip(COORDS_PISTA_MON, angles_cantonades): # TODO: No calcula be la y quan esta darrere la camera / sota la pantalla
-            angle_c[0] = np.degrees(math.atan2(cant[0] - pos[0], cant[1] - pos[1]))- angle[2] #X
-            angle_c[1] = np.degrees(math.atan2((cant[2] + pos[2]), ((cant[1] - pos[1]) / math.cos(np.radians(angle_c[0]))))) + angle[0] #Y
-        print(angles_cantonades[0][1])
-
-        target_points = np.zeros((4,2)).astype(int)
-
-        for target, angle_c in zip(target_points, angles_cantonades):
-            target[0] = int(t + distancia_focal * math.tan(np.radians(angle_c[0])))
-            target[1] = int(t + distancia_focal * math.tan(np.radians(angle_c[1])))
-        print(target_points[0])
         target_points = np.dot(rotation_m, np.r_[target_points.transpose(), [[1,1,1,1]]]).transpose().astype(int)[:,:2]
-
         h, status = cv2.findHomography(image_coords, target_points)
         h_inv = np.linalg.inv(h)
 
@@ -145,7 +149,7 @@ class HomographyCreator:
 
         #Mirar si el terra esta a sota o a sobre l'horitzó
         isUnder = (target_points[0][0]*m + c > target_points[0][1])*2 - 1
-        c -= image_side*0.05*isUnder/math.cos(np.radians(angle_c[1]))
+        c -= image_side*0.05*isUnder/math.cos(np.radians(angle[1]))
 
         horizon_mask = np.fromfunction(lambda i, j: isUnder*(m*j + c) < isUnder*i, (image_side, image_side), dtype=int)
         
@@ -163,7 +167,7 @@ class HomographyCreator:
         if(self.SHOW_IMAGES_LEVEL > 1):
             cv2.imshow("ImageInit2", result)
 
-        # Importar la resta d'imatges
+        # Importar la resta d'imatges TODO: Modificar perque sigui mes rapid i no importi una imatge per pixel en la llunyania
         for i in range(image_side):
             for j in range(image_side): # Double nested for loop yaay
                 if(not result[i, j, :].any()):
