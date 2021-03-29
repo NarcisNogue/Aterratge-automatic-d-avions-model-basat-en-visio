@@ -11,10 +11,10 @@ def normalize(input_image):
     return input_image
 
 coords = [
-            [41.62778728171866, 2.2506523362405804], #A prop dreta
-            [41.62782537455772, 2.250786446689412], #A prop esquerra
-            [41.62692006354912, 2.251237060701778], #Lluny dreta
-            [41.626875454201034, 2.2510969152827487] #Lluny esquerra
+            [42.17463766392258, 2.7694728849318997], #A prop dreta
+            [42.1746575418201, 2.7693139640500344], #A prop esquerra
+            [42.175835414755745, 2.769468334508671], #Lluny dreta
+            [42.17582646986923, 2.769619208763607] #Lluny esquerra
         ]
 length = 50
 width = 11.74
@@ -79,12 +79,12 @@ while True:
 
     # mean_pred_mask = np.mean(pred_mask, axis=0)
     # cv2.imshow("Predicted Mask", mean_pred_mask)
-    cv2.imshow("True Mask", mask.astype(np.uint8)*255)
+    cv2.imshow("True Mask", cv2.resize(mask.astype(np.uint8)*255, (256, 256)))
     masked_result = result.copy()
     masked_result[mask] = (masked_result[mask] * 0.5).astype(np.uint8)
     masked_result[mask, 2] = 255
-    cv2.imshow("Result with mask", masked_result)
-    cv2.imshow("Result", result)
+    cv2.imshow("Result with mask", cv2.resize(masked_result, (256, 256)))
+    cv2.imshow("Result", cv2.resize(result, (256, 256)))
 
     key = cv2.waitKey()
     if(key == ord("q")):
