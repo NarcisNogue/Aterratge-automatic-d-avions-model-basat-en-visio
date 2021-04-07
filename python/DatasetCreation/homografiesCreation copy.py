@@ -2,7 +2,6 @@ from ICGCService import ICGCService
 import cv2
 import math
 import numpy as np
-import time
 
 service = ICGCService()
 #########################################################################################################
@@ -30,14 +29,13 @@ def line_eq(p1, p2):
 ################################### CALCULS INICIALS ####################################################
 #########################################################################################################
 class HomographyCreator:
-    def __init__(self, coordinates, show_image_level, width, length, image_side=520, partitions=5):
+    def __init__(self, coordinates, show_image_level, width, length, image_side=520):
         self.SHOW_IMAGES_LEVEL = show_image_level
         self.LENGTH_PISTA = length
         self.WIDTH_PISTA = width
         self.coordinates = coordinates
         self.image_side = image_side
-        self.cache = {},
-        self.partitions = partitions
+        self.cache = {}
 
     def createHomography(self, pos, angle, target_coordinates=None):
         COORDS = np.array(self.coordinates)
@@ -86,7 +84,11 @@ class HomographyCreator:
         #########################################################################################################
         ####################################### HOMOGRAFIA ######################################################
         #########################################################################################################
-        result = np.zeros((image_side,image_side,3), dtype=np.uint8)
+        result_image = np.zeros((image_side,image_side,3))
+
+
+
+
 
         ################################    POSICIONAR LA CAMERA EN EL MON ################################
         ## CONSIDERO COORDENADES (0,0,0) LA CANTONADA 0 DE LA PISTA
@@ -155,7 +157,7 @@ class HomographyCreator:
             cv2.imshow("Horizon", horizon_mask.astype(np.uint8)*255)
 
 
-        # result = cv2.warpPerspective(image, h, (image_side,image_side))
+        result = cv2.warpPerspective(image, h, (image_side,image_side))
 
         #Pintar horitzó
         result[horizon_mask, 0] = 255
@@ -165,72 +167,63 @@ class HomographyCreator:
         if(self.SHOW_IMAGES_LEVEL > 1):
             cv2.imshow("ImageInit2", result)
 
-        step = np.floor(image_side/float(self.partitions))
-        for i in range(self.partitions + int(step*self.partitions < image_side)): # Afegeix una particio si cal per haver arrodonit avall
-            for j in range(self.partitions + int(step*self.partitions < image_side)):
-                min_x = step*i
-                max_x = min(step*(i+1), image_side - 1)
-                min_y = step*j
-                max_y = min(step*(j+1), image_side - 1)
+        # Importar la resta d'imatges TODO: Modificar perque sigui mes rapid i no importi una imatge per pixel en la llunyania
+        for i in range(image_side):
+            for j in range(image_side): # Double nested for loop yaay
+                if(not result[i, j, :].any()):
+                    res = np.dot(h_inv, np.array([j, i, 1]).reshape(3,1))
 
-                square_points = np.array([
-                    [min_x, min_y],
-                    [max_x, min_y],
-                    [min_x, max_y],
-                    [max_x, max_y] 
-                ])
 
-                end_points = np.zeros((0,2))
-                for point in square_points:
-                    if(isUnder * (point[0] * m + c) > isUnder * point[1]):
-                        end_points = np.vstack((end_points, point))
+                    quadrant = np.array([np.floor((res[1]/res[2]) / image_side), np.floor((res[0]/res[2]) / image_side)]).astype(int).flatten()
+                    new_image_coords = [
+                        min_lat - vertical_margin + image_size*-quadrant[0],
+                        min_lon - horiz_margin + image_size*quadrant[1],
+                        max_lat + vertical_margin + image_size*-quadrant[0],
+                        max_lon + horiz_margin + image_size*quadrant[1]
+                    ]
+                    new_image = np.zeros((image_side, image_side, 3), np.int8)
+                    if(quadrant[0] in self.cache.keys() and quadrant[1] in self.cache[quadrant[0]].keys()):
+                        new_image = self.cache[quadrant[0]][quadrant[1]]
+                    else:
+                        new_image = service.getSatImage(
+                                new_image_coords[0],
+                                new_image_coords[1],
+                                new_image_coords[2],
+                                new_image_coords[3],
+                                height=image_side,
+                                width=image_side,
+                                layer="orto25c2016"
+                            )
+                        if(not quadrant[0] in self.cache.keys()):
+                            self.cache[quadrant[0]] = {}
+                        self.cache[quadrant[0]][quadrant[1]] = new_image
 
-                if(end_points.shape[0] == 4):
-                    h_inv_points = np.dot(h_inv, np.r_[end_points.transpose(), [[1,1,1,1]]])
-                    h_inv_points = h_inv_points / h_inv_points[2]
-                    h_inv_points = h_inv_points.transpose().astype(int)[:,:2] #[:,::-1]
-                    
-                    
-                    lat_lon_points = h_inv_points / image_side * image_size + np.array([min_lat, min_lon])
 
-                    min_lat_curr = min(lat_lon_points[:,0])
-                    min_lon_curr = min(lat_lon_points[:,1])
-
-                    max_lat_curr = max(lat_lon_points[:,0])
-                    max_lon_curr = max(lat_lon_points[:,1])
-
-        
-                    new_image = service.getSatImage(
-                        min_lat_curr,
-                        min_lon_curr,
-                        max_lat_curr,
-                        max_lon_curr,
-                        height=image_side,
-                        width=image_side,
-                        layer="orto25c2016"
+                    translation_matrix = np.array(
+                        [
+                            [1, 0, image_side*quadrant[1]],
+                            [0, 1, image_side*quadrant[0]],
+                            [0, 0, 1]
+                        ]
                     )
 
-                    cv2.imshow("Desc", new_image)
-                    
-                    image_points = (lat_lon_points - np.array([min_lat_curr, min_lon_curr]))/np.array([max_lat_curr-min_lat_curr, max_lon_curr-min_lon_curr])*image_side
-
-                    h2, status = cv2.findHomography(image_points, end_points)
+                    # cv2.imshow("ImageResult4", new_image)
 
                     mask = np.ones((image_side, image_side), np.uint8)
 
-                    warped_new_image = cv2.warpPerspective(new_image, h2, (image_side, image_side))
-                    warped_mask = cv2.warpPerspective(mask, h2, (image_side, image_side))
-
-                    cv2.imshow("Masksksks", warped_mask*255)
-                    cv2.waitKey()
+                    warped_new_image = cv2.warpPerspective(new_image, np.dot(h, translation_matrix), (image_side, image_side))
+                    warped_mask = cv2.warpPerspective(mask, np.dot(h, translation_matrix), (image_side, image_side))
 
                     warped_mask[horizon_mask == 1] = 0
 
                     result[warped_mask == 1] = warped_new_image[warped_mask == 1]
 
-
-
-
+                    if(self.SHOW_IMAGES_LEVEL > 0):
+                        cv2.imshow("Loading...", result)
+                        if cv2.waitKey(1) == ord('q'):
+                            break
+                    
+        
         if(self.SHOW_IMAGES_LEVEL > 1):
             result2 = result.copy()
             for corner in target_points:
@@ -246,4 +239,4 @@ if(__name__ == "__main__"):
             [41.62692006354912, 2.251237060701778], #Lluny dreta
             [41.626875454201034, 2.2510969152827487] #Lluny esquerra
         ], 3, 11.74, 50)
-    resultImage, coords = homographyService.createHomography([-5, -30, 15], [-10, 0, 0])
+    resultImage, coords = homographyService.createHomography([-5, 5, 15], [-10, 0, 0])
