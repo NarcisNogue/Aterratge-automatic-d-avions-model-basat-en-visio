@@ -239,4 +239,4 @@ if(__name__ == "__main__"):
             [41.62692006354912, 2.251237060701778], #Lluny dreta
             [41.626875454201034, 2.2510969152827487] #Lluny esquerra
         ], 3, 11.74, 50)
-    resultImage, coords = homographyService.createHomography([-5, 5, 15], [-10, 0, 0])
+    resultImage, coords = homographyService.createHomography([-5, -30, 15], [-10, 0, 0])

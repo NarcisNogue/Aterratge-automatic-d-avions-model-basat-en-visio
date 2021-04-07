@@ -1,3 +1,4 @@
+from skimage.draw import polygon2mask, polygon, polygon_perimeter
 from ICGCService import ICGCService
 import cv2
 import math
@@ -174,24 +175,30 @@ class HomographyCreator:
                 max_y = min(step*(j+1), image_side - 1)
 
                 square_points = np.array([
-                    [min_x, min_y],
-                    [max_x, min_y],
-                    [min_x, max_y],
-                    [max_x, max_y] 
-                ])
+                    [min_y, min_x],
+                    [max_y, min_x],
+                    [max_y, max_x],
+                    [min_y, max_x] 
+                ]) #[:,::-1]
 
                 end_points = np.zeros((0,2))
                 for point in square_points:
-                    if(isUnder * (point[0] * m + c) > isUnder * point[1]):
+                    if(isUnder * (point[1] * m + c) > isUnder * point[0]):
                         end_points = np.vstack((end_points, point))
 
                 if(end_points.shape[0] == 4):
+                    print(end_points)
                     h_inv_points = np.dot(h_inv, np.r_[end_points.transpose(), [[1,1,1,1]]])
                     h_inv_points = h_inv_points / h_inv_points[2]
-                    h_inv_points = h_inv_points.transpose().astype(int)[:,:2] #[:,::-1]
+                    h_inv_points = h_inv_points.transpose()[:,:2] #[:,::-1]
+
+                    print(h_inv_points)
+                    print()
                     
                     
-                    lat_lon_points = h_inv_points / image_side * image_size + np.array([min_lat, min_lon])
+                    # lat_lon_points = h_inv_points / (np.array([max_lat - min_lat, max_lon - min_lon]) / image_size * image_side) * image_size + np.array([min_lat, min_lon])
+
+                    lat_lon_points = h_inv_points / image_side * image_size * np.array([-1, 1]) + np.array([min_lat - vertical_margin, min_lon - horiz_margin])
 
                     min_lat_curr = min(lat_lon_points[:,0])
                     min_lon_curr = min(lat_lon_points[:,1])
@@ -212,16 +219,28 @@ class HomographyCreator:
 
                     cv2.imshow("Desc", new_image)
                     
-                    image_points = (lat_lon_points - np.array([min_lat_curr, min_lon_curr]))/np.array([max_lat_curr-min_lat_curr, max_lon_curr-min_lon_curr])*image_side
+                    image_points = ((lat_lon_points - np.array([min_lat_curr, min_lon_curr]))/np.array([max_lat_curr-min_lat_curr, max_lon_curr-min_lon_curr])*image_side)[:,::-1]
+
+                    result3 = new_image.copy()
+                    for corner in image_points.astype(int):
+                        result3 = cv2.circle(result3, (corner[0], corner[1]), 5, (0,255,0), -1)
+                    cv2.imshow("ImageResult1", result3)
 
                     h2, status = cv2.findHomography(image_points, end_points)
 
                     mask = np.ones((image_side, image_side), np.uint8)
 
                     warped_new_image = cv2.warpPerspective(new_image, h2, (image_side, image_side))
-                    warped_mask = cv2.warpPerspective(mask, h2, (image_side, image_side))
+                    warped_mask_total = cv2.warpPerspective(mask, h2, (image_side, image_side))
+                    # warped_mask[:,:int(min_x)] = 0
+                    # warped_mask[:,int(max_x):] = 0
+                    # warped_mask[:int(min_y),:] = 0
+                    # warped_mask[int(max_y):,:] = 0
 
-                    cv2.imshow("Masksksks", warped_mask*255)
+                    warped_mask = np.transpose(polygon2mask(result.shape[:-1], end_points))
+
+                    cv2.imshow("Masksksks", warped_mask.astype(np.uint8)*255)
+                    cv2.imshow("MaskTotal", warped_mask_total.astype(np.uint8)*255)
                     cv2.waitKey()
 
                     warped_mask[horizon_mask == 1] = 0
