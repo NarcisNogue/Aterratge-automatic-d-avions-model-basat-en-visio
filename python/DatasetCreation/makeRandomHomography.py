@@ -23,7 +23,7 @@ image_side = 128
 
 strip_width = image_side*1.0 / length * width
 
-service = hc(coords, 1, width, length, image_side=image_side, partitions=5)
+service = hc(coords, 1, width, length, image_side=image_side, partitions=4)
 
 # model = tf.keras.models.load_model('../DatasetAnalysis/Models/ModelTestBlender3.h5')
 
@@ -34,7 +34,8 @@ def getRandomHomography():
     perpectiveAngle = np.random.randint(0,60)
     scale = 1 - max(np.abs(np.random.normal())/3, .8)
     translation = [np.random.randint(-t,t), np.random.randint(-t,t)]
-    rotation2 = np.random.normal()/3*180
+    rotation2 = np.random.normal()/10*180
+    print(rotation2)
     target_cords = np.array(
                 [
                     [int(image_side/2 + strip_width/2), image_side],
