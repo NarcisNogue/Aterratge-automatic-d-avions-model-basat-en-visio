@@ -134,6 +134,9 @@ class HomographyCreator:
         h, status = cv2.findHomography(image_coords, target_points)
         h_inv = np.linalg.inv(h)
 
+        h_image_to_world, status2 = cv2.findHomography(target_points, COORDS[:,::-1])
+        h_inv_image_to_world = np.linalg.inv(h_image_to_world)
+
         ## GET HORIZON
         # horizon_level = image_side - int(image_side/2 - (angle[0]/MAX_ANGLE*image_side))
         cantonades_finals = cv2.perspectiveTransform(np.array([np.array([[0,0],[0, image_side-1],[image_side-1, image_side-1],[image_side-1, 0]]).astype(np.float32)]), h)[0]
@@ -175,36 +178,50 @@ class HomographyCreator:
                 max_y = min(step*(j+1), image_side - 1)
 
                 square_points = np.array([
-                    [min_y, min_x],
-                    [max_y, min_x],
-                    [max_y, max_x],
-                    [min_y, max_x] 
-                ]) #[:,::-1]
+                    [min_x, min_y],
+                    [max_x, min_y],
+                    [max_x, max_y],
+                    [min_x, max_y] 
+                ])
 
                 end_points = np.zeros((0,2))
                 for point in square_points:
-                    if(isUnder * (point[1] * m + c) > isUnder * point[0]):
+                    if(isUnder * (point[0] * m + c) > isUnder * point[1]):
                         end_points = np.vstack((end_points, point))
 
                 if(end_points.shape[0] == 4):
                     print(end_points)
                     h_inv_points = np.dot(h_inv, np.r_[end_points.transpose(), [[1,1,1,1]]])
                     h_inv_points = h_inv_points / h_inv_points[2]
-                    h_inv_points = h_inv_points.transpose()[:,:2] #[:,::-1]
+                    h_inv_points = h_inv_points.transpose()[:,:2]
 
+
+                    mask42 = np.transpose(polygon2mask(result.shape[:-1], h_inv_points))
+                    cv2.imshow("mask42", mask42.astype(np.uint8) * 255)
+
+                    # FINS AQUI ESTA BE ----
+                    
                     print(h_inv_points)
                     print()
                     
                     
                     # lat_lon_points = h_inv_points / (np.array([max_lat - min_lat, max_lon - min_lon]) / image_size * image_side) * image_size + np.array([min_lat, min_lon])
 
-                    lat_lon_points = h_inv_points / image_side * image_size * np.array([-1, 1]) + np.array([min_lat - vertical_margin, min_lon - horiz_margin])
+                    # lat_lon_points = h_inv_points[:,::-1] / image_side * image_size * np.array([1, -1]) + np.array([min_lat - vertical_margin, min_lon - horiz_margin])
 
+                    lat_lon_points = np.dot(h_image_to_world, np.r_[end_points.transpose(), [[1,1,1,1]]])
+                    lat_lon_points = lat_lon_points / lat_lon_points[2]
+                    lat_lon_points = lat_lon_points.transpose()[:,:2][:,::-1]
+
+                    print(lat_lon_points)
+                    
                     min_lat_curr = min(lat_lon_points[:,0])
                     min_lon_curr = min(lat_lon_points[:,1])
 
                     max_lat_curr = max(lat_lon_points[:,0])
                     max_lon_curr = max(lat_lon_points[:,1])
+
+                    # max_min_coords_curr = np.array
 
         
                     new_image = service.getSatImage(
@@ -219,14 +236,22 @@ class HomographyCreator:
 
                     cv2.imshow("Desc", new_image)
                     
-                    image_points = ((lat_lon_points - np.array([min_lat_curr, min_lon_curr]))/np.array([max_lat_curr-min_lat_curr, max_lon_curr-min_lon_curr])*image_side)[:,::-1]
+                    image_points = ((lat_lon_points - np.array([min_lat_curr, min_lon_curr]))/np.array([max_lat_curr-min_lat_curr, max_lon_curr-min_lon_curr])*image_side)
+                    image_points[:,0] = (image_side - image_points[:,0])
+
+                    # -- Fins aqui funciona
+                    
+                    image_points_end = np.dot(h_inv_image_to_world, np.r_[lat_lon_points[:,::-1].transpose(), [[1,1,1,1]]])
+                    image_points_end = image_points_end / image_points_end[2]
+                    image_points_end = image_points_end.transpose()[:,:2]
+                    
 
                     result3 = new_image.copy()
                     for corner in image_points.astype(int):
                         result3 = cv2.circle(result3, (corner[0], corner[1]), 5, (0,255,0), -1)
                     cv2.imshow("ImageResult1", result3)
 
-                    h2, status = cv2.findHomography(image_points, end_points)
+                    h2, status = cv2.findHomography(image_points, image_points_end)
 
                     mask = np.ones((image_side, image_side), np.uint8)
 
@@ -237,15 +262,17 @@ class HomographyCreator:
                     # warped_mask[:int(min_y),:] = 0
                     # warped_mask[int(max_y):,:] = 0
 
-                    warped_mask = np.transpose(polygon2mask(result.shape[:-1], end_points))
+                    warped_mask = np.transpose(polygon2mask(result.shape[:-1], image_points_end))
 
                     cv2.imshow("Masksksks", warped_mask.astype(np.uint8)*255)
                     cv2.imshow("MaskTotal", warped_mask_total.astype(np.uint8)*255)
-                    cv2.waitKey()
 
                     warped_mask[horizon_mask == 1] = 0
 
                     result[warped_mask == 1] = warped_new_image[warped_mask == 1]
+
+                    cv2.imshow("resulelslslslss", result)
+                    cv2.waitKey()
 
 
 
