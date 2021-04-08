@@ -172,6 +172,7 @@ class HomographyCreator:
         step = np.floor(image_side/float(self.partitions))
         for i in range(self.partitions + int(step*self.partitions < image_side)): # Afegeix una particio si cal per haver arrodonit avall
             for j in range(self.partitions + int(step*self.partitions < image_side)):
+                start = time.time()
                 min_x = step*i
                 max_x = min(step*(i+1), image_side - 1)
                 min_y = step*j
@@ -190,7 +191,7 @@ class HomographyCreator:
                         end_points = np.vstack((end_points, point))
 
                 if(end_points.shape[0] == 4):
-                    print(end_points)
+                    # print(end_points)
                     h_inv_points = np.dot(h_inv, np.r_[end_points.transpose(), [[1,1,1,1]]])
                     h_inv_points = h_inv_points / h_inv_points[2]
                     h_inv_points = h_inv_points.transpose()[:,:2]
@@ -201,8 +202,8 @@ class HomographyCreator:
 
                     # FINS AQUI ESTA BE ----
                     
-                    print(h_inv_points)
-                    print()
+                    # print(h_inv_points)
+                    # print()
                     
                     
                     # lat_lon_points = h_inv_points / (np.array([max_lat - min_lat, max_lon - min_lon]) / image_size * image_side) * image_size + np.array([min_lat, min_lon])
@@ -213,7 +214,7 @@ class HomographyCreator:
                     lat_lon_points = lat_lon_points / lat_lon_points[2]
                     lat_lon_points = lat_lon_points.transpose()[:,:2][:,::-1]
 
-                    print(lat_lon_points)
+                    # print(lat_lon_points)
                     
                     min_lat_curr = min(lat_lon_points[:,0])
                     min_lon_curr = min(lat_lon_points[:,1])
@@ -236,14 +237,30 @@ class HomographyCreator:
 
                     cv2.imshow("Desc", new_image)
                     
-                    image_points = ((lat_lon_points - np.array([min_lat_curr, min_lon_curr]))/np.array([max_lat_curr-min_lat_curr, max_lon_curr-min_lon_curr])*image_side)
-                    image_points[:,0] = (image_side - image_points[:,0])
-
                     # -- Fins aqui funciona
+                    
+
+                    # ----------------------------- IGNORAR
+                    image_points = ((lat_lon_points - np.array([min_lat_curr, min_lon_curr]))/np.array([max_lat_curr-min_lat_curr, max_lon_curr-min_lon_curr])*image_side)
+                    image_points[:,1] = (image_side - image_points[:,1])
+                    # image_points[:,0] = (image_side - image_points[:,0])
+
                     
                     image_points_end = np.dot(h_inv_image_to_world, np.r_[lat_lon_points[:,::-1].transpose(), [[1,1,1,1]]])
                     image_points_end = image_points_end / image_points_end[2]
                     image_points_end = image_points_end.transpose()[:,:2]
+                    # ------------------------------------------
+
+                    cantonades_im_result = np.array([
+                        [min_lat_curr, min_lon_curr],
+                        [min_lat_curr, max_lon_curr],
+                        [max_lat_curr, min_lon_curr],
+                        [max_lat_curr, max_lon_curr]
+                    ])
+
+                    homography_points = np.dot(h_inv_image_to_world, np.r_[cantonades_im_result[:,::-1].transpose(), [[1,1,1,1]]])
+                    homography_points = homography_points / homography_points[2]
+                    homography_points = homography_points.transpose()[:,:2]
                     
 
                     result3 = new_image.copy()
@@ -251,7 +268,12 @@ class HomographyCreator:
                         result3 = cv2.circle(result3, (corner[0], corner[1]), 5, (0,255,0), -1)
                     cv2.imshow("ImageResult1", result3)
 
-                    h2, status = cv2.findHomography(image_points, image_points_end)
+                    h2, status = cv2.findHomography(np.array([
+                        [0, image_side],
+                        [image_side, image_side],
+                        [0,0],
+                        [image_side, 0],
+                    ]), homography_points)
 
                     mask = np.ones((image_side, image_side), np.uint8)
 
@@ -272,7 +294,8 @@ class HomographyCreator:
                     result[warped_mask == 1] = warped_new_image[warped_mask == 1]
 
                     cv2.imshow("resulelslslslss", result)
-                    cv2.waitKey()
+                    # cv2.waitKey()
+                    print(time.time() - start)
 
 
 
@@ -291,5 +314,5 @@ if(__name__ == "__main__"):
             [41.62782537455772, 2.250786446689412], #A prop esquerra
             [41.62692006354912, 2.251237060701778], #Lluny dreta
             [41.626875454201034, 2.2510969152827487] #Lluny esquerra
-        ], 3, 11.74, 50)
+        ], 3, 11.74, 50, image_side=128)
     resultImage, coords = homographyService.createHomography([-5, -30, 15], [-10, 0, 0])

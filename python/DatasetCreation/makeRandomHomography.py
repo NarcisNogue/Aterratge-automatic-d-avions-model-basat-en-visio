@@ -11,10 +11,10 @@ def normalize(input_image):
     return input_image
 
 coords = [
-            [42.17463766392258, 2.7694728849318997], #A prop dreta
-            [42.1746575418201, 2.7693139640500344], #A prop esquerra
-            [42.175835414755745, 2.769468334508671], #Lluny dreta
-            [42.17582646986923, 2.769619208763607] #Lluny esquerra
+            [41.62778728171866, 2.2506523362405804], #A prop dreta
+            [41.62782537455772, 2.250786446689412], #A prop esquerra
+            [41.62692006354912, 2.251237060701778], #Lluny esquerra
+            [41.626875454201034, 2.2510969152827487] #Lluny dreta
         ]
 length = 50
 width = 11.74
@@ -23,7 +23,7 @@ image_side = 128
 
 strip_width = image_side*1.0 / length * width
 
-service = hc(coords, 1, width, length, image_side=image_side)
+service = hc(coords, 1, width, length, image_side=image_side, partitions=3)
 
 # model = tf.keras.models.load_model('../DatasetAnalysis/Models/ModelTestBlender3.h5')
 
@@ -89,3 +89,4 @@ while True:
     key = cv2.waitKey()
     if(key == ord("q")):
         break
+    print("HELLOOOOOOOOOO")
