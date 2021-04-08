@@ -23,7 +23,7 @@ image_side = 128
 
 strip_width = image_side*1.0 / length * width
 
-service = hc(coords, 1, width, length, image_side=image_side, partitions=3)
+service = hc(coords, 1, width, length, image_side=image_side, partitions=5)
 
 # model = tf.keras.models.load_model('../DatasetAnalysis/Models/ModelTestBlender3.h5')
 

@@ -21,7 +21,7 @@ def findIntersection(p1,p2,p3,p4):
     t = (((x1-x3)*(y3-y4)-(y1-y3)*(x3-x4)))/(((x1-x2)*(y3-y4)-(y1-y2)*(x3-x4)))
     px = x1 + t*(x2-x1)
     py = y1 + t*(y2-y1)
-    return [px, py]
+    return [px, py], t
 
 def line_eq(p1, p2):
     m = ((p2[1] - p1[1])) / (p2[0] - p1[0])
@@ -142,10 +142,10 @@ class HomographyCreator:
         cantonades_finals = cv2.perspectiveTransform(np.array([np.array([[0,0],[0, image_side-1],[image_side-1, image_side-1],[image_side-1, 0]]).astype(np.float32)]), h)[0]
 
         ## Interseccions Rectes verticals (1->2 i 0->3)
-        point_1 = findIntersection(cantonades_finals[1], cantonades_finals[2], cantonades_finals[0], cantonades_finals[3])
+        point_1, *_ = findIntersection(cantonades_finals[1], cantonades_finals[2], cantonades_finals[0], cantonades_finals[3])
 
         ## Interseccions Rectes horitzontals (0->1 i 3->2)
-        point_2 = findIntersection(cantonades_finals[0], cantonades_finals[1], cantonades_finals[3], cantonades_finals[2])
+        point_2, *_ = findIntersection(cantonades_finals[0], cantonades_finals[1], cantonades_finals[3], cantonades_finals[2])
 
         m, c = line_eq(point_1, point_2)
 
@@ -172,7 +172,7 @@ class HomographyCreator:
         step = np.floor(image_side/float(self.partitions))
         for i in range(self.partitions + int(step*self.partitions < image_side)): # Afegeix una particio si cal per haver arrodonit avall
             for j in range(self.partitions + int(step*self.partitions < image_side)):
-                start = time.time()
+                
                 min_x = step*i
                 max_x = min(step*(i+1), image_side - 1)
                 min_y = step*j
@@ -185,20 +185,37 @@ class HomographyCreator:
                     [min_x, max_y] 
                 ])
 
+                tmp_array = square_points.copy()
+                inserted = 0
+
+                horizon_left = [0, c]
+                horizon_right = [image_side, image_side * m + c]
+
+                for z in range(4):
+                    p1 = square_points[z]
+                    p2 = square_points[(z+1) % 4]
+                    intersect, t = findIntersection(p1, p2, horizon_left, horizon_right)
+                    if(0 <= t <= 1):
+                        tmp_array = np.insert(tmp_array, z+1+inserted, np.array(intersect), 0)
+                        inserted += 1
+
                 end_points = np.zeros((0,2))
-                for point in square_points:
-                    if(isUnder * (point[0] * m + c) > isUnder * point[1]):
+
+                for point in tmp_array:
+                    if(isUnder * (point[0] * m + c) >= isUnder * point[1]):
                         end_points = np.vstack((end_points, point))
 
-                if(end_points.shape[0] == 4):
+
+                if(end_points.shape[0] > 2):
                     # print(end_points)
-                    h_inv_points = np.dot(h_inv, np.r_[end_points.transpose(), [[1,1,1,1]]])
+                    h_inv_points = np.dot(h_inv, np.r_[end_points.transpose(), np.ones((1, end_points.shape[0]))])
                     h_inv_points = h_inv_points / h_inv_points[2]
                     h_inv_points = h_inv_points.transpose()[:,:2]
 
 
-                    mask42 = np.transpose(polygon2mask(result.shape[:-1], h_inv_points))
-                    cv2.imshow("mask42", mask42.astype(np.uint8) * 255)
+                    if(self.SHOW_IMAGES_LEVEL > 2):
+                        mask42 = np.transpose(polygon2mask(result.shape[:-1], h_inv_points))
+                        cv2.imshow("mask42", mask42.astype(np.uint8) * 255)
 
                     # FINS AQUI ESTA BE ----
                     
@@ -210,7 +227,7 @@ class HomographyCreator:
 
                     # lat_lon_points = h_inv_points[:,::-1] / image_side * image_size * np.array([1, -1]) + np.array([min_lat - vertical_margin, min_lon - horiz_margin])
 
-                    lat_lon_points = np.dot(h_image_to_world, np.r_[end_points.transpose(), [[1,1,1,1]]])
+                    lat_lon_points = np.dot(h_image_to_world, np.r_[end_points.transpose(), np.ones((1, end_points.shape[0]))])
                     lat_lon_points = lat_lon_points / lat_lon_points[2]
                     lat_lon_points = lat_lon_points.transpose()[:,:2][:,::-1]
 
@@ -224,7 +241,7 @@ class HomographyCreator:
 
                     # max_min_coords_curr = np.array
 
-        
+                    start = time.time()
                     new_image = service.getSatImage(
                         min_lat_curr,
                         min_lon_curr,
@@ -234,39 +251,24 @@ class HomographyCreator:
                         width=image_side,
                         layer="orto25c2016"
                     )
-
-                    cv2.imshow("Desc", new_image)
+                    if(self.SHOW_IMAGES_LEVEL > 2):
+                        cv2.imshow("Desc", new_image)
+                    
+                    print(time.time() - start)
                     
                     # -- Fins aqui funciona
-                    
-
-                    # ----------------------------- IGNORAR
-                    image_points = ((lat_lon_points - np.array([min_lat_curr, min_lon_curr]))/np.array([max_lat_curr-min_lat_curr, max_lon_curr-min_lon_curr])*image_side)
-                    image_points[:,1] = (image_side - image_points[:,1])
-                    # image_points[:,0] = (image_side - image_points[:,0])
-
-                    
-                    image_points_end = np.dot(h_inv_image_to_world, np.r_[lat_lon_points[:,::-1].transpose(), [[1,1,1,1]]])
-                    image_points_end = image_points_end / image_points_end[2]
-                    image_points_end = image_points_end.transpose()[:,:2]
-                    # ------------------------------------------
-
                     cantonades_im_result = np.array([
                         [min_lat_curr, min_lon_curr],
                         [min_lat_curr, max_lon_curr],
                         [max_lat_curr, min_lon_curr],
                         [max_lat_curr, max_lon_curr]
                     ])
-
-                    homography_points = np.dot(h_inv_image_to_world, np.r_[cantonades_im_result[:,::-1].transpose(), [[1,1,1,1]]])
-                    homography_points = homography_points / homography_points[2]
-                    homography_points = homography_points.transpose()[:,:2]
                     
 
-                    result3 = new_image.copy()
-                    for corner in image_points.astype(int):
-                        result3 = cv2.circle(result3, (corner[0], corner[1]), 5, (0,255,0), -1)
-                    cv2.imshow("ImageResult1", result3)
+                    homography_points = np.dot(h_inv_image_to_world, np.r_[cantonades_im_result[:,::-1].transpose(), np.ones((1, cantonades_im_result.shape[0]))])
+                    homography_points = homography_points / homography_points[2]
+                    homography_points = homography_points.transpose()[:,:2]
+
 
                     h2, status = cv2.findHomography(np.array([
                         [0, image_side],
@@ -284,18 +286,19 @@ class HomographyCreator:
                     # warped_mask[:int(min_y),:] = 0
                     # warped_mask[int(max_y):,:] = 0
 
-                    warped_mask = np.transpose(polygon2mask(result.shape[:-1], image_points_end))
+                    warped_mask = np.transpose(polygon2mask(result.shape[:-1], end_points))
 
-                    cv2.imshow("Masksksks", warped_mask.astype(np.uint8)*255)
-                    cv2.imshow("MaskTotal", warped_mask_total.astype(np.uint8)*255)
+                    if(self.SHOW_IMAGES_LEVEL > 2):
+                        cv2.imshow("Masksksks", warped_mask.astype(np.uint8)*255)
+                        cv2.imshow("MaskTotal", warped_mask_total.astype(np.uint8)*255)
 
                     warped_mask[horizon_mask == 1] = 0
 
                     result[warped_mask == 1] = warped_new_image[warped_mask == 1]
 
-                    cv2.imshow("resulelslslslss", result)
-                    # cv2.waitKey()
-                    print(time.time() - start)
+                    if(self.SHOW_IMAGES_LEVEL > 2):
+                        cv2.imshow("resulelslslslss", result)
+                        cv2.waitKey()
 
 
 
@@ -314,5 +317,5 @@ if(__name__ == "__main__"):
             [41.62782537455772, 2.250786446689412], #A prop esquerra
             [41.62692006354912, 2.251237060701778], #Lluny dreta
             [41.626875454201034, 2.2510969152827487] #Lluny esquerra
-        ], 3, 11.74, 50, image_side=128)
+        ], 3, 11.74, 50, image_side=512, partitions=4)
     resultImage, coords = homographyService.createHomography([-5, -30, 15], [-10, 0, 0])
