@@ -94,15 +94,18 @@ if __name__ == "__main__":
 
         result, cords = randomHCreator.getRandomHomography()
 
-        mask = np.transpose(polygon2mask(result.shape[:-1], cords))
-        cv2.imshow("True Mask", cv2.resize(mask.astype(np.uint8)*255, (256, 256)))
-        masked_result = result.copy()
-        masked_result[mask] = (masked_result[mask] * 0.5).astype(np.uint8)
-        masked_result[mask, 2] = 255
-        cv2.imshow("Result with mask", cv2.resize(masked_result, (256, 256)))
-        cv2.imshow("Result", cv2.resize(result, (256, 256)))
+        if(result is not None):
+            mask = np.transpose(polygon2mask(result.shape[:-1], cords))
+            cv2.imshow("True Mask", cv2.resize(mask.astype(np.uint8)*255, (256, 256)))
+            masked_result = result.copy()
+            masked_result[mask] = (masked_result[mask] * 0.5).astype(np.uint8)
+            masked_result[mask, 2] = 255
+            cv2.imshow("Result with mask", cv2.resize(masked_result, (256, 256)))
+            cv2.imshow("Result", cv2.resize(result, (256, 256)))
 
-        key = cv2.waitKey()
-        if(key == ord("q")):
-            break
-        print("HELLOOOOOOOOOO")
+            key = cv2.waitKey()
+            if(key == ord("q")):
+                break
+            print("HELLOOOOOOOOOO")
+        else:
+            print("Error creating homography, skipping image")
