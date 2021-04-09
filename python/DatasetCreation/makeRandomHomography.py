@@ -24,12 +24,6 @@ def normalize(input_image):
 
 class RandomHomographyCreator:
     def __init__(self, coords, image_side, partitions):
-        # coords = [
-        #             [41.62778728171866, 2.2506523362405804], #A prop dreta
-        #             [41.62782537455772, 2.250786446689412], #A prop esquerra
-        #             [41.62692006354912, 2.251237060701778], #Lluny esquerra
-        #             [41.626875454201034, 2.2510969152827487] #Lluny dreta
-        #         ]
         length = getDistanceFromLatLonInM(coords[1][0], coords[1][1], coords[2][0], coords[2][1])
         width = getDistanceFromLatLonInM(coords[0][0], coords[0][1], coords[1][0], coords[1][1])
 
@@ -75,9 +69,9 @@ class RandomHomographyCreator:
             cord[0] = (cord[0] - t) * scale + t + translation[0]
             cord[1] = (cord[1] - t) * scale + t + translation[1]
 
-        result, cords = self.service.createHomography(None, [None, rotation2, None], target_cords)
+        result, cords, horizon_mask = self.service.createHomography(None, [None, rotation2, None], target_cords)
 
-        return result, cords
+        return result, cords, horizon_mask
 
 
 if __name__ == "__main__":
@@ -92,7 +86,7 @@ if __name__ == "__main__":
 
         randomHCreator = RandomHomographyCreator(coords, 520, 5)
 
-        result, cords = randomHCreator.getRandomHomography()
+        result, cords, horizon_mask = randomHCreator.getRandomHomography()
 
         if(result is not None):
             mask = np.transpose(polygon2mask(result.shape[:-1], cords))
