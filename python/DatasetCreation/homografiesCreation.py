@@ -239,9 +239,6 @@ class HomographyCreator:
                     max_lat_curr = max(lat_lon_points[:,0])
                     max_lon_curr = max(lat_lon_points[:,1])
 
-                    # max_min_coords_curr = np.array
-
-                    start = time.time()
                     new_image = service.getSatImage(
                         min_lat_curr,
                         min_lon_curr,
@@ -254,9 +251,6 @@ class HomographyCreator:
                     if(self.SHOW_IMAGES_LEVEL > 2):
                         cv2.imshow("Desc", new_image)
                     
-                    print(time.time() - start)
-                    
-                    # -- Fins aqui funciona
                     cantonades_im_result = np.array([
                         [min_lat_curr, min_lon_curr],
                         [min_lat_curr, max_lon_curr],
