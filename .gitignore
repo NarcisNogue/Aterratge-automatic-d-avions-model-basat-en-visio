@@ -1,6 +1,7 @@
 # Datasets
 python/venvs
 Datasets
+!Datasets/BlenderDatasets/*
 *.pyc
 .vscode
 Unity/*

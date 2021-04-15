@@ -8,8 +8,10 @@ import tensorflow_datasets as tfds
 from IPython.display import clear_output
 import matplotlib.pyplot as plt
 
-
 import gc
+import os
+
+curr_path = os.path.dirname(os.path.realpath(__file__))
 
 def parse_image(img_path: str) -> dict:
     image = tf.io.read_file(img_path)
@@ -20,14 +22,12 @@ def parse_image(img_path: str) -> dict:
     mask = tf.io.read_file(mask_path)
 
     mask = tf.image.decode_png(mask, channels=1)
-    mask = tf.where(mask == 255, np.dtype('uint8').type(0), mask)
-    # Note that we have to convert the new value (0)
-    # With the same dtype than the tensor itself
+    mask = tf.where(mask != 0, np.dtype('uint8').type(1), mask)
 
     return {'image': image, 'segmentation_mask': mask}
 
 
-data = tf.data.Dataset.list_files("../../Datasets/BlenderDataset/Images/" + "*.png", seed=42)
+data = tf.data.Dataset.list_files(curr_path + "/../../Datasets/BlenderDataset/Images/" + "*.png", seed=42)
 data = data.map(parse_image)
 
 train_dataset = data.take(int(len(data)/2))
