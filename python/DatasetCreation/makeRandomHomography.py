@@ -3,6 +3,7 @@ from homografiesCreation import HomographyCreator as hc
 from random import uniform
 # import tensorflow as tf
 import numpy as np
+import asyncio
 import math
 import cv2
 
@@ -69,7 +70,7 @@ class RandomHomographyCreator:
             cord[0] = (cord[0] - t) * scale + t + translation[0]
             cord[1] = (cord[1] - t) * scale + t + translation[1]
 
-        result, cords, horizon_mask = self.service.createHomography(None, [None, rotation2, None], target_cords)
+        result, cords, horizon_mask = asyncio.run(self.service.createHomography(None, [None, rotation2, None], target_cords))
 
         return result, cords, horizon_mask
 
@@ -84,7 +85,7 @@ if __name__ == "__main__":
                     [41.626875454201034, 2.2510969152827487] #Lluny dreta
                 ]
 
-        randomHCreator = RandomHomographyCreator(coords, 520, 5)
+        randomHCreator = RandomHomographyCreator(coords, 520, 30)
 
         result, cords, horizon_mask = randomHCreator.getRandomHomography()
 

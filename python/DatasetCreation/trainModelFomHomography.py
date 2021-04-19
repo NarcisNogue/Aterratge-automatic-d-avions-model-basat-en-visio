@@ -18,8 +18,7 @@ image_size = 128
 SEED = 42
 partitions = 8
 curr_path = os.path.dirname(os.path.realpath(__file__))
-pistes = open(curr_path + "/coords_pistes.txt", "r")
-coords_pista = pistes.readline()
+
 
 # FUNCTIONS
 
@@ -170,9 +169,11 @@ test_data = test_data.map(parse_image)
 services = []
 names = []
 
+pistes = open(curr_path + "/coords_pistes.txt", "r")
+coords_pista = pistes.readline()
 while coords_pista and not "#DESCARTATS" in coords_pista:
     coords = np.array(coords_pista.split("//")[0].replace(",","").split(), dtype=np.float64).reshape(4,2)
-    services.append(rhc(coords, image_size, partitions))
+    services.append(rhc(coords, image_size*2, partitions))
     names.append(coords_pista.split("//")[1].replace("\n","").replace("\r",""))
     coords_pista = pistes.readline()
 pistes.close()
@@ -184,14 +185,14 @@ while True:
     masks = []
     it = 0
     while it < NUM_IMAGES:
-        index = random.choice(range(len(services)))
+        index = 0 #random.choice(range(len(services)))
         result, cords, horizon_mask = services[index].getRandomHomography()
 
         if(result is not None):
             mask = np.transpose(polygon2mask(result.shape[:-1], cords))
             print("HELLOOOOOOOOOO")
-            images.append(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
-            masks.append(mask)
+            images.append(cv2.resize(cv2.cvtColor(result, cv2.COLOR_BGR2RGB), (image_size, image_size)))
+            masks.append(cv2.resize(mask.astype(np.uint8), (image_size, image_size)))
             it += 1
         else:
             print("Error creating homography, skipping image")
@@ -214,7 +215,7 @@ while True:
 
     BUFFER_SIZE = 100
     TRAIN_LENGTH = len(train)
-    BATCH_SIZE = 1
+    BATCH_SIZE = 5
     STEPS_PER_EPOCH = TRAIN_LENGTH // BATCH_SIZE
 
     train_dataset = train.take(BUFFER_SIZE).shuffle(BUFFER_SIZE).batch(BATCH_SIZE).cache().repeat()
@@ -222,7 +223,7 @@ while True:
     test_dataset = test.batch(BATCH_SIZE)
 
     
-    EPOCHS = 2
+    EPOCHS = 5
     VAL_SUBSPLITS = 10
     VALIDATION_STEPS = len(test)//BATCH_SIZE//VAL_SUBSPLITS
 
@@ -232,20 +233,20 @@ while True:
                             validation_data=test_dataset,
                             callbacks=[DisplayCallback()])
 
-    loss = model_history.history['loss']
-    val_loss = model_history.history['val_loss']
+    # loss = model_history.history['loss']
+    # val_loss = model_history.history['val_loss']
 
-    epochs = range(EPOCHS)
+    # epochs = range(EPOCHS)
 
-    plt.figure()
-    plt.plot(epochs, loss, 'r', label='Training loss')
-    plt.plot(epochs, val_loss, 'bo', label='Validation loss')
-    plt.title('Training and Validation Loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss Value')
-    plt.ylim([0, 1])
-    plt.legend()
-    plt.show()
+    # plt.figure()
+    # plt.plot(epochs, loss, 'r', label='Training loss')
+    # plt.plot(epochs, val_loss, 'bo', label='Validation loss')
+    # plt.title('Training and Validation Loss')
+    # plt.xlabel('Epoch')
+    # plt.ylabel('Loss Value')
+    # plt.ylim([0, 1])
+    # plt.legend()
+    # plt.show()
 
     # show_predictions(test_dataset, 3)
 

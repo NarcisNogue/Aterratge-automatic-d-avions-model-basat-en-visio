@@ -1,9 +1,11 @@
 from skimage.draw import polygon2mask, polygon, polygon_perimeter
 from ICGCService import ICGCService
+import asyncio
 import cv2
 import math
 import numpy as np
 import time
+import sys
 
 service = ICGCService()
 #########################################################################################################
@@ -27,6 +29,7 @@ def line_eq(p1, p2):
     m = ((p2[1] - p1[1])) / (p2[0] - p1[0])
     c = (p2[1] - (m * p2[0]))
     return m, c
+
 #########################################################################################################
 ################################### CALCULS INICIALS ####################################################
 #########################################################################################################
@@ -40,7 +43,30 @@ class HomographyCreator:
         self.cache = {},
         self.partitions = partitions
 
-    def createHomography(self, pos, angle, target_coordinates=None):
+        self.lock = asyncio.Lock()
+
+        self.result = np.zeros((image_side,image_side,3), dtype=np.uint8)
+    
+    async def download_section(self, max_lat_lon, h2, horizon_mask, end_points):
+        print("call")
+        new_image = await service.getSatImage(
+            max_lat_lon[0],
+            max_lat_lon[1],
+            max_lat_lon[2],
+            max_lat_lon[3],
+            height=self.image_side,
+            width=self.image_side,
+            layer="orto25c2016"
+        )
+
+        warped_new_image = cv2.warpPerspective(new_image, h2, (self.image_side, self.image_side))
+        warped_mask = np.transpose(polygon2mask(self.result.shape[:-1], end_points))
+        warped_mask[horizon_mask == 1] = 0
+        async with self.lock:
+            self.result[warped_mask == 1] = warped_new_image[warped_mask == 1]
+        print("callended")
+
+    async def createHomography(self, pos, angle, target_coordinates=None):
         try:
             COORDS = np.array(self.coordinates)
             max_lat = max(COORDS[:,0])
@@ -50,6 +76,7 @@ class HomographyCreator:
             min_lon = min(COORDS[:,1])
 
             image_side = self.image_side
+            self.result = np.zeros((image_side,image_side,3), dtype=np.uint8)
 
             image_size = max((max_lon - min_lon),(max_lat - min_lat))
 
@@ -61,34 +88,12 @@ class HomographyCreator:
             image_coords[:,1] = (image_size - (COORDS[:,0] - min_lat + vertical_margin)) / image_size * image_side
             image_coords[:,0] = (COORDS[:,1] - min_lon + horiz_margin) / image_size * image_side
             image_coords = image_coords.astype(int)
-            
-
-            ##### GET IMAGE
-
-            image = service.getSatImage(
-                        min_lat - vertical_margin,
-                        min_lon - horiz_margin,
-                        max_lat + vertical_margin,
-                        max_lon + horiz_margin,
-                        height=image_side,
-                        width=image_side,
-                        layer="orto25c2016"
-                        )
-
-            # Marcar les cantonades
-
-            if(self.SHOW_IMAGES_LEVEL > 1):
-                show_image = image.copy()
-                for corner in image_coords:
-                    show_image = cv2.circle(show_image, (corner[0], corner[1]), 5, (0,255,0), -1)
-                cv2.imshow("ImageInit", show_image)
 
 
 
             #########################################################################################################
             ####################################### HOMOGRAFIA ######################################################
             #########################################################################################################
-            result = np.zeros((image_side,image_side,3), dtype=np.uint8)
 
             ################################    POSICIONAR LA CAMERA EN EL MON ################################
             ## CONSIDERO COORDENADES (0,0,0) LA CANTONADA 0 DE LA PISTA
@@ -163,12 +168,14 @@ class HomographyCreator:
             # result = cv2.warpPerspective(image, h, (image_side,image_side))
 
             #Pintar horitzó
-            result[horizon_mask, 0] = 255
-            result[horizon_mask, 1] = 255
-            result[horizon_mask, 2] = 0
+            self.result[horizon_mask, 0] = 255
+            self.result[horizon_mask, 1] = 255
+            self.result[horizon_mask, 2] = 0
 
             if(self.SHOW_IMAGES_LEVEL > 1):
-                cv2.imshow("ImageInit2", result)
+                cv2.imshow("ImageInit2", self.result)
+
+            calls = []
 
             step = np.floor(image_side/float(self.partitions))
             for i in range(self.partitions + int(step*self.partitions < image_side)): # Afegeix una particio si cal per haver arrodonit avall
@@ -215,7 +222,7 @@ class HomographyCreator:
 
 
                         if(self.SHOW_IMAGES_LEVEL > 2):
-                            mask42 = np.transpose(polygon2mask(result.shape[:-1], h_inv_points))
+                            mask42 = np.transpose(polygon2mask(self.result.shape[:-1], h_inv_points))
                             cv2.imshow("mask42", mask42.astype(np.uint8) * 255)
 
                         # FINS AQUI ESTA BE ----
@@ -239,18 +246,6 @@ class HomographyCreator:
 
                         max_lat_curr = max(lat_lon_points[:,0])
                         max_lon_curr = max(lat_lon_points[:,1])
-
-                        new_image = service.getSatImage(
-                            min_lat_curr,
-                            min_lon_curr,
-                            max_lat_curr,
-                            max_lon_curr,
-                            height=image_side,
-                            width=image_side,
-                            layer="orto25c2016"
-                        )
-                        if(self.SHOW_IMAGES_LEVEL > 2):
-                            cv2.imshow("Desc", new_image)
                         
                         cantonades_im_result = np.array([
                             [min_lat_curr, min_lon_curr],
@@ -264,7 +259,6 @@ class HomographyCreator:
                         homography_points = homography_points / homography_points[2]
                         homography_points = homography_points.transpose()[:,:2]
 
-
                         h2, status = cv2.findHomography(np.array([
                             [0, image_side],
                             [image_side, image_side],
@@ -272,40 +266,20 @@ class HomographyCreator:
                             [image_side, 0],
                         ]), homography_points)
 
-                        mask = np.ones((image_side, image_side), np.uint8)
-
-                        warped_new_image = cv2.warpPerspective(new_image, h2, (image_side, image_side))
-                        warped_mask_total = cv2.warpPerspective(mask, h2, (image_side, image_side))
-                        # warped_mask[:,:int(min_x)] = 0
-                        # warped_mask[:,int(max_x):] = 0
-                        # warped_mask[:int(min_y),:] = 0
-                        # warped_mask[int(max_y):,:] = 0
-
-                        warped_mask = np.transpose(polygon2mask(result.shape[:-1], end_points))
-
-                        if(self.SHOW_IMAGES_LEVEL > 2):
-                            cv2.imshow("Masksksks", warped_mask.astype(np.uint8)*255)
-                            cv2.imshow("MaskTotal", warped_mask_total.astype(np.uint8)*255)
-
-                        warped_mask[horizon_mask == 1] = 0
-
-                        result[warped_mask == 1] = warped_new_image[warped_mask == 1]
-
-                        if(self.SHOW_IMAGES_LEVEL > 2):
-                            cv2.imshow("resulelslslslss", result)
-                            cv2.waitKey()
-
-
+                        calls.append(self.download_section([min_lat_curr, min_lon_curr, max_lat_curr, max_lon_curr], h2.copy(), horizon_mask, end_points.copy()))
+            
+            await asyncio.gather(*calls)
 
 
             if(self.SHOW_IMAGES_LEVEL > 1):
-                result2 = result.copy()
+                result2 = self.result.copy()
                 for corner in target_points:
                     result2 = cv2.circle(result2, (corner[0], corner[1]), 5, (0,255,0), -1)
                 cv2.imshow("ImageResult1", result2)
                 cv2.waitKey()
-            return result, target_points, horizon_mask
-        except:
+            return self.result, target_points, horizon_mask
+        except OSError as err:
+            print(err)
             return None, None, None
 
 if(__name__ == "__main__"):
@@ -314,5 +288,5 @@ if(__name__ == "__main__"):
             [41.62782537455772, 2.250786446689412], #A prop esquerra
             [41.62692006354912, 2.251237060701778], #Lluny dreta
             [41.626875454201034, 2.2510969152827487] #Lluny esquerra
-        ], 3, 11.74, 50, image_side=512, partitions=4)
-    resultImage, coords = homographyService.createHomography([-5, -30, 15], [-10, 0, 0])
+        ], 3, 11.74, 50, image_side=512, partitions=20)
+    resultImage, coords, horizon = asyncio.run(homographyService.createHomography([-5, -30, 15], [-10, 0, 0]))

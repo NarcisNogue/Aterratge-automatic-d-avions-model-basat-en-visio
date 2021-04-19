@@ -1,4 +1,6 @@
 import requests
+import aiohttp
+import asyncio
 import utm
 import cv2
 import numpy as np
@@ -11,7 +13,7 @@ class ICGCService:
         self.altitudeUrl = "http://geoserveis.icgc.cat/icgc_mdt2m/wms/service"
 
 
-    def getSatImage(self, minLat, minLon, maxLat, maxLon, width=520, height=520, layer="orto25c2016"):
+    async def getSatImage(self, minLat, minLon, maxLat, maxLon, width=520, height=520, layer="orto25c2016"):
         minCords = ",".join(str(i) for i in utm.from_latlon(minLat, minLon)[0:2])
         maxCords = ",".join(str(i) for i in utm.from_latlon(maxLat, maxLon)[0:2]) #0xFFFFFF&TRANSPARENT=TRUE&EXCEPTION=INIMAGE
         params = {
@@ -31,8 +33,16 @@ class ICGCService:
         }
 
         # REQUEST
-        r = requests.get(self.imagesUrl, params=params)
-        image = cv2.imdecode(np.frombuffer(r.content, np.uint8), -1)
+        # r = requests.get(self.imagesUrl, params=params)
+        # image = cv2.imdecode(np.frombuffer(r.content, np.uint8), -1)
+        # return image
+
+        session = aiohttp.ClientSession()
+        content = b''
+        async with session.get(self.imagesUrl, params=params) as resp:
+            content = await resp.content.read()
+        image = cv2.imdecode(np.frombuffer(content, np.uint8), -1)
+        await session.close()
         return image
 
 # https://geoserveis.icgc.cat/icgc_mdt2m/wms/service?REQUEST=GetMap&SERVICE=WMS&VERSION=1.3.0
@@ -70,7 +80,7 @@ class ICGCService:
 if __name__ == "__main__":
     # 41.626854692115955, 2.250532669633619, 41.627898950089, 2.2514200465686196
     service = ICGCService()
-    image = service.getSatImage(41.626854692115955, 2.250532669633619, 41.627898950089, 2.2514200465686196, layer="orto25c2016")
+    image = asyncio.run(service.getSatImage(41.626854692115955, 2.250532669633619, 41.627898950089, 2.2514200465686196, layer="orto25c2016"))
     cv2.imshow("Image", image)
     # cv2.waitKey()
 
