@@ -7,6 +7,36 @@ import numpy as np
 
 # https://www.icgc.cat/Administracio-i-empresa/Serveis/Geoinformacio-en-linia-Geoserveis
 
+def dataAugmentationFunction(image, mask):
+    result = [image]
+    masks = [mask]
+
+    # Canviar color ---------------------------
+
+    # Afegir blau (simula nit)
+    for i in [(x+1)/10.0+1 for x in range(8)]:
+        newImage = image.copy()
+        newImage[:,:,0] = np.clip((newImage[:,:,0]*i), 0, 255).astype(np.uint8)
+        result.append(newImage)
+        masks.append(mask.copy()) # La mascara no canvia
+        cv2.imshow("Image", newImage)
+        cv2.waitKey()
+
+    # Enfosquir
+    for im in result.copy():
+        for i in [0.5 + x/10.0 for x in range(5)]:
+            newImage = im.copy()
+            newImage = np.clip((newImage*i), 0, 255).astype(np.uint8)
+            result.append(newImage)
+            masks.append(mask.copy()) # La mascara no canvia
+            cv2.imshow("Image", newImage)
+            cv2.waitKey()
+
+    # Zoom i Translacions ---------------------------
+    # for im, mask in zip(result.copy(), masks.copy()):
+
+
+
 class ICGCService:
     def __init__(self):
         self.imagesUrl = "https://geoserveis.icgc.cat/icc_ortohistorica/wms/service"
