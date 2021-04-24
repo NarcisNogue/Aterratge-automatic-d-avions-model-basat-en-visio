@@ -48,7 +48,6 @@ class HomographyCreator:
         self.result = np.zeros((image_side,image_side,3), dtype=np.uint8)
     
     async def download_section(self, max_lat_lon, h2, horizon_mask, end_points):
-        print("call")
         new_image = await service.getSatImage(
             max_lat_lon[0],
             max_lat_lon[1],
@@ -58,13 +57,14 @@ class HomographyCreator:
             width=self.image_side,
             layer="orto25c2016"
         )
-
-        warped_new_image = cv2.warpPerspective(new_image, h2, (self.image_side, self.image_side))
+        try:
+            warped_new_image = cv2.warpPerspective(new_image, h2, (self.image_side, self.image_side))
+        except:
+            return
         warped_mask = np.transpose(polygon2mask(self.result.shape[:-1], end_points))
         warped_mask[horizon_mask == 1] = 0
         async with self.lock:
             self.result[warped_mask == 1] = warped_new_image[warped_mask == 1]
-        print("callended")
 
     async def createHomography(self, pos, angle, target_coordinates=None):
         try:
@@ -119,14 +119,14 @@ class HomographyCreator:
                 for cant, angle_c in zip(COORDS_PISTA_MON, angles_cantonades): # TODO: No calcula be la y quan esta darrere la camera / sota la pantalla
                     angle_c[0] = np.degrees(math.atan2(cant[0] - pos[0], cant[1] - pos[1]))- angle[2] #X
                     angle_c[1] = np.degrees(math.atan2((cant[2] + pos[2]), ((cant[1] - pos[1]) / math.cos(np.radians(angle_c[0]))))) + angle[0] #Y
-                print(angles_cantonades[0][1])
+                # print(angles_cantonades[0][1])
 
                 target_points = np.zeros((4,2)).astype(int)
 
                 for target, angle_c in zip(target_points, angles_cantonades):
                     target[0] = int(t + distancia_focal * math.tan(np.radians(angle_c[0])))
                     target[1] = int(t + distancia_focal * math.tan(np.radians(angle_c[1])))
-                print(target_points[0])
+                # print(target_points[0])
             else:
                 target_points = target_coordinates
 
@@ -164,8 +164,6 @@ class HomographyCreator:
             if(self.SHOW_IMAGES_LEVEL > 2):
                 cv2.imshow("Horizon", horizon_mask.astype(np.uint8)*255)
 
-
-            # result = cv2.warpPerspective(image, h, (image_side,image_side))
 
             #Pintar horitzó
             self.result[horizon_mask, 0] = 255
@@ -278,15 +276,17 @@ class HomographyCreator:
                 cv2.imshow("ImageResult1", result2)
                 cv2.waitKey()
             return self.result, target_points, horizon_mask
-        except OSError as err:
-            print(err)
+        except:
             return None, None, None
 
 if(__name__ == "__main__"):
+
+    
+
     homographyService = HomographyCreator([
-            [41.62778728171866, 2.2506523362405804], #A prop dreta
-            [41.62782537455772, 2.250786446689412], #A prop esquerra
-            [41.62692006354912, 2.251237060701778], #Lluny dreta
-            [41.626875454201034, 2.2510969152827487] #Lluny esquerra
-        ], 3, 11.74, 50, image_side=512, partitions=20)
+            [42.446485, 1.918215],
+            [42.446423, 1.918270], 
+            [42.44585, 1.917215], 
+            [42.44591, 1.91716]
+        ], 2, 11.74, 50, image_side=512, partitions=20)
     resultImage, coords, horizon = asyncio.run(homographyService.createHomography([-5, -30, 15], [-10, 0, 0]))

@@ -190,7 +190,6 @@ while True:
 
         if(result is not None):
             mask = np.transpose(polygon2mask(result.shape[:-1], cords))
-            print("HELLOOOOOOOOOO")
             images.append(cv2.resize(cv2.cvtColor(result, cv2.COLOR_BGR2RGB), (image_size, image_size)))
             masks.append(cv2.resize(mask.astype(np.uint8), (image_size, image_size)))
             it += 1
