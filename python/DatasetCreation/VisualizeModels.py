@@ -42,7 +42,7 @@ while(1):
     if(result is not None):
         print("HELLOOOOOOOOOO")
         image = cv2.cvtColor(cv2.resize(result, (128,128)), cv2.COLOR_BGR2RGB)
-        pred_mask = create_mask(model.predict(image[tf.newaxis, ...]))
+        pred_mask = create_mask(model.predict(normalize(image[tf.newaxis, ...])))
 
         cv2.imshow("Imatge",  cv2.resize(result, (256, 256)))
         cv2.imshow("Mask", cv2.resize(pred_mask.numpy().astype(np.uint8)*255, (256, 256)))

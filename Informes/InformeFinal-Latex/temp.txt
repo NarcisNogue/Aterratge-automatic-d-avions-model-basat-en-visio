@@ -1,0 +1,34 @@
+\bibitem{ILS}
+Instrument Landing System (ILS)
+\\\url{https://www.skybrary.aero/index.php/Instrument_Landing_System_(ILS)}
+\\Visitat 28-2-2021
+
+\bibitem{Autoland}
+Autoland Systems
+\\\url{https://www.skybrary.aero/index.php/Autoland}
+\\Visitat 1-3-2021
+
+\bibitem{PERT}
+La metodologia PERT
+\\\url{https://en.wikipedia.org/wiki/Program_evaluation_and_review_technique}
+\\Visitat 1-3-2021
+
+\bibitem{WBS}
+Work Breakdown Structure
+\\\url{https://www.workbreakdownstructure.com/}
+\\Visitat 1-3-2021
+
+\bibitem{Gantt}
+Diagrama de Gantt en Latex
+\\\url{https://www.gantt.com/}
+\\Visitat 8-3-2021
+
+\bibitem{GanttLatex}
+What is a Gantt Chart?
+\\\url{https://es.overleaf.com/project/6045fda53e80236ed63bee8a}
+\\Visitat 8-3-2021
+
+\bibitem{Pomodoro}
+El mètode Pomodoro
+\\\url{http://www.baomee.info/pdf/technique/1.pdf}
+\\Visitat 8-3-2021

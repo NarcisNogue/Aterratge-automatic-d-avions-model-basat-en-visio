@@ -8,11 +8,22 @@ import numpy as np
 import base64
 import time
 from PIL import Image
+import tensorflow as tf
 import io
+import os
 
 def ThumbFromBuffer(buf):
     im = Image.open(io.BytesIO(buf))
     return im
+
+def create_mask(pred_mask):
+    pred_mask = tf.argmax(pred_mask, axis=-1)
+    pred_mask = pred_mask[..., tf.newaxis]
+    return pred_mask[0]
+
+def normalize(input_image):
+    input_image = tf.cast(input_image, tf.float32) / 255.0
+    return input_image
 
 # GLOBALS
 
@@ -52,6 +63,11 @@ PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
 
 fail = 0
 
+curr_path = os.path.dirname(os.path.realpath(__file__))
+model = tf.keras.models.load_model(curr_path + "/Model")
+
+print("MODEL LOADED")
+
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.bind((HOST, PORT))
@@ -74,8 +90,10 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     exit()
                 # try:
                 image = np.array(ThumbFromBuffer(data))[:, :, ::-1]
+                pred_mask = create_mask(model.predict(normalize(image[tf.newaxis, ...])))
                 # print(image)
                 cv2.imshow("frame", cv2.resize(image, (256, 256)))
+                cv2.imshow("Mask", cv2.resize(pred_mask.numpy().astype(np.uint8)*255, (256, 256)))
                 # except:
                 #     print(np.random.rand())
                 #     pass
