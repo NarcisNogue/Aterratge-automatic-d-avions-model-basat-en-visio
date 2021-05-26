@@ -11,6 +11,7 @@ from PIL import Image
 import tensorflow as tf
 import io
 import os
+from mask_analysis import Analyzer
 
 import threading
 
@@ -36,7 +37,9 @@ def normalize(input_image):
 
 buffsize = 1024
 SHARED_DATA = b''
-SHARED_STATE = 0
+SHARED_STATE = (0, 0)
+SHARED_TARGET = ()
+IMAGE_SIZE = 128
 
 # Functions
 End='<EOF>'.encode()
@@ -74,11 +77,14 @@ class Thread_Analyzer(threading.Thread):
     def run(self):
         global SHARED_DATA
         global SHARED_STATE
+        global SHARED_TARGET
 
         curr_path = os.path.dirname(os.path.realpath(__file__))
-        model = tf.keras.models.load_model(curr_path + "/ModelTest140521.h5")
+        model_far = tf.keras.models.load_model(curr_path + "/ModelTest200521.h5")
 
-        print("MODEL LOADED")
+        a = Analyzer(IMAGE_SIZE, 0.05, 0.1)
+
+        print("MODELS LOADED")
 
         while True:
             lock.acquire()
@@ -90,7 +96,11 @@ class Thread_Analyzer(threading.Thread):
                 if data is None:
                     continue
                 image = np.array(data) #[:, :, ::-1]
-                pred_mask = create_mask(model.predict(normalize(image[tf.newaxis, ...])))
+                pred_mask = create_mask(model_far.predict(normalize(image[tf.newaxis, ...])))
+                target = a.getPista(pred_mask)
+                lock.acquire()
+                SHARED_TARGET = target
+                lock.release()
                 # print(image)
                 cv2.imshow("frame", cv2.resize(image[:, :, ::-1], (256, 256)))
                 cv2.imshow("Mask", cv2.resize(pred_mask.numpy().astype(np.uint8)*100, (256, 256)))
@@ -108,11 +118,14 @@ class Thread_Socket(threading.Thread):
 
         global SHARED_STATE
         global SHARED_DATA
+        global SHARED_TARGET
 
         HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
         PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
 
         local_state = 1
+
+        sock_target = (0, 0)
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind((HOST, PORT))
@@ -145,7 +158,12 @@ class Thread_Socket(threading.Thread):
                             break
                         lock.acquire()
                         SHARED_DATA = data
+                        sock_target = SHARED_TARGET
                         lock.release()
+                        if(sock_target is not None and len(sock_target) > 1):
+                            conn.send((str(sock_target[0]) + "," + str(sock_target[1])).encode())
+                        else:
+                            conn.send("None".encode())
 
 
 if __name__ == "__main__":
