@@ -126,7 +126,7 @@ public class plane_control : MonoBehaviour
         RollD1 = 0.05f;
         RollP2 = 10f;
         RollI2 = 0.000f;
-        RollD2 = 1f;
+        RollD2 = 0.5f;
         prevRoll1 = 0f;
         prevRoll2 = 0f;
         RollSum1 = 0f;
@@ -248,9 +248,7 @@ public class plane_control : MonoBehaviour
             RollSum1 += diffX;
             RollSum1 *= 0.99f;
 
-            if(altitude < 30 && altitude >= 20){
-                RollTarget = rollOnGetFloor / (altitude - 20);
-            } else if(altitude < 20){
+            if(altitude < 10){
                 RollTarget = 0f;
             }
 
@@ -275,7 +273,7 @@ public class plane_control : MonoBehaviour
             PitchSum1 += diffY;
             PitchSum1 *= 0.99f;
 
-            if(altitude < 20){
+            if(altitude < 15){
                 PitchTarget = 0f;
             }
 
@@ -298,11 +296,8 @@ public class plane_control : MonoBehaviour
             thrustForce = ((float)PitchTarget + 10f) / 10f / 2 * maxThrust;
             thrustForce = Math.Min(Math.Max(thrustForce, minThrust), maxThrust);
 
-            if(altitude < 20){
+            if(altitude < 15) {
                 thrustForce = 5f;
-            }
-            if(altitude < 10) {
-                thrustForce = 10f;
             }
             if(altitude < 3) {
                 thrustForce = 0f;
@@ -340,6 +335,18 @@ public class plane_control : MonoBehaviour
         body.AddRelativeTorque ( forward * yTorque );
         // body.AddTorque(dragRotation * 0.01 * Math.Pow(localVel.x, 2));
 
+
+        // MOVE CONTROL SURFACES (Nomes estetic)
+        // var targetAngle = new Vector3(elevon_angle, 0, 0);
+        // var angleActual = elevon.transform.rotation.eulerAngles;
+        // for(int i = 0; i < 3; i++)
+        //     angleActual[i] -= (angleActual[i] >= 180) ? 360 : 0;
+        // var eulerAngleVelocity = targetAngle - angleActual;
+        // //Debug.Log(angleActual);
+        // //m_Rigidbody.MoveRotation(Quaternion.Lerp(rotationA, rotationB, Time.deltaTime/*ratio/mov_time*/));
+        // var deltaRotation = Quaternion.Euler(eulerAngleVelocity * velocity * Time.deltaTime);
+        // elevon.m_RigidBody.MoveRotation(elevon.m_RigidBody.rotation * deltaRotation);
+
         // SEND RENDER ---------------------
         RenderTexture.active = cam1out;
         texOut.ReadPixels(new Rect(0, 0, cam1out.width, cam1out.height), 0, 0);
@@ -358,10 +365,17 @@ public class plane_control : MonoBehaviour
             pointHistory.Add(targetPoint);
             if(pointHistory.Count > 10) pointHistory.RemoveAt(0);
 
+            var meanX = 0f;
+            var meanY = 0f;
+            foreach(var point in pointHistory) {
+                meanX += point[0];
+                meanY += point[1];
+            }
+
             // Get target angle from point in image -----
             // Local angle
-            var angle_loc_x = (targetPoint[0] - 64)/64*30;
-            var angle_loc_y = (targetPoint[1] - 64)/64*30;
+            var angle_loc_x = (meanX / pointHistory.Count - 64)/64*30;
+            var angle_loc_y = (meanY / pointHistory.Count - 64)/64*30;
 
             targetAngle[0] = body.transform.rotation.y + angle_loc_x;
             targetAngle[1] = body.transform.rotation.z + angle_loc_y;

@@ -47,13 +47,14 @@ class Analyzer():
             min_y = np.min(max_contour[:,0,1])
             max_y = np.max(max_contour[:,0,1])
 
-            margin = 8
+            margin_near = 20
+            margin_far = 8
 
-            min_x_near = np.min(max_contour[:, 0, 0][np.abs(max_contour[:,0,1] - max_y) < margin])
-            max_x_near = np.max(max_contour[:, 0, 0][np.abs(max_contour[:,0,1] - max_y) < margin])
+            min_x_near = np.min(max_contour[:, 0, 0][np.abs(max_contour[:,0,1] - max_y) < margin_near])
+            max_x_near = np.max(max_contour[:, 0, 0][np.abs(max_contour[:,0,1] - max_y) < margin_near])
 
-            min_x_far = np.min(max_contour[:, 0, 0][np.abs(max_contour[:,0,1] - min_y) < margin])
-            max_x_far = np.max(max_contour[:, 0, 0][np.abs(max_contour[:,0,1] - min_y) < margin])
+            min_x_far = np.min(max_contour[:, 0, 0][np.abs(max_contour[:,0,1] - min_y) < margin_far])
+            max_x_far = np.max(max_contour[:, 0, 0][np.abs(max_contour[:,0,1] - min_y) < margin_far])
 
             landing_x = (min_x_near + max_x_near) / 2
 
