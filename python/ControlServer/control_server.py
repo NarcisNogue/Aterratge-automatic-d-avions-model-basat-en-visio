@@ -11,7 +11,7 @@ from PIL import Image
 import tensorflow as tf
 import io
 import os
-from mask_analysis import Analyzer
+from mask_analysis import Analyzer # type: ignore ( Sino dona warning erroniament )
 
 import threading
 
