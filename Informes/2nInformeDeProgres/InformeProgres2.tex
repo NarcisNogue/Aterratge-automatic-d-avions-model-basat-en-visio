@@ -511,6 +511,29 @@ calcula amb la mitjana dels deu últims punts que han arribat, ja que com que el
 aproximadament un segon no impossibilita un bon resultat i ajuda molt en reduïr moviments bruscs per punts que no han
 estat ben detectats en algun frame.
 
+Per assegurar que l'avió es dirigeix en la direcció correcta sense fer moviments bruscs i sense oscilacions massa grans utilitzo
+quatre controls PID (Proporcional, Integral i Derivatiu), dos per cada eix. El primer calcula la inclinació desitjada de l'avió 
+en funció de la posició objectiu i la posició actual, i el segon calcula la posició de les superfícies de control per aconseguir 
+la inclinació desitjada, tant per l'eix de gir dreta-esquerra (roll) com per l'eix amunt-avall (pitch).
+
+En la figura \ref{fig-aterratge-simulador} es veu tot el procés, amb el simulador a la dreta i la imatge que rep, la màscara de la
+pista analitzada i la màscara de la pista i el cel sense processar a l'esquerra. En la imatge del centre a la columna de l'esquerra
+es veuen diversos punts que representen la pista, el més important és el punt central dels tres inferiors, que representa l'inici de 
+la pista i és el punt cap on l'avió intenta dirigir-se.
+
+\begin{figure}[h]
+\centering
+\fbox{\includegraphics[width=0.4\textwidth]{img/AterratgeEnSimulador.PNG}}
+    \caption{Simulador a la dreta i procés d'anàlisi de la imatge a la dreta.}
+    \label{fig-aterratge-simulador}
+\end{figure}
+
+Finalment, just abans d'aterrar l'avió perd de vista la pista perquè la pista ocupa la gran majoria de la imatge. Per tant
+mitjançant un sensor ultrasònic de distància amb un rang de fins a quatre metres detecto quan l'avió està just a sobre el terra
+i ordeno al controlador que mantingui l'avió anivellat i disminuïnt l'alçada a poc a poc utilitzant la potència del motor, d'aquesta
+manera, i assumint que l'avió estava completament encarat a la pista quan s'ha detectat el terra, aconsegueixo un aterratge suau.
+
+
 \subsection{Tasca 6: Investigar integració arduino amb radiocontrol}
 Aquesta és la última secció que vull destacar. El meu tfg també inclou en els seus objectius opcionals construir un avió a escala i aconseguir
 que aterri automàticament, així que he estat investigant la manera de construïr un avió que tingui la programabilitat suficient per a donar-me
@@ -522,6 +545,63 @@ una Jetson Nano per al reconeixement de la pista i el control autònom, un Taran
 per al receptor radiocontrol, tots dos de la marca FrSky. He escollit Taranis perquè la majoria dels productes són de codi obert i permeten
 comunicació bidireccional, de manera que els podria programar per rebre telemetria de l'avió directament al transmissor i saber a temps real
 l'estat dels algoritmes autònoms i la confiança del controlador en un bon aterratge.
+
+\subsection{Comentari adicional sobre el desenvolupament}
+Finalment, vull comentar que hi ha hagut un canvi en la planificació i he decidit no construïr el primer avió "pathfinder" que en teoria 
+hauria d'haver estat construint paral·lelament al desenvolupament de software que he fet fins al moment, i en canvi construiré 
+directament l'avió que pretenc que aterri de forma autònoma. D'aquesta manera puc dedicar tot el temps a integrar el hardware final 
+i no hauré de duplicar treball quan en realitat el software ja està a punt per a un aterratge autònom.
+
+Tenint en compte que tota aquesta branca s'ha eliminat, destaco que el projecte va exactament al ritme marcat i per tant he complert 
+tots els objectius que m'havia proposat per a aquesta entrega.
+
+
+\begin{figure}[h]
+\centering
+\fbox{\includegraphics[width=0.4\textwidth]{img/LossGraph.png}}
+    \caption{Mètrica Loss en el procés d'entrenament, he trobat que entre 5 i 6 iteracions són suficients per a entrenar un bon model sense overfitting. }
+    \label{fig-loss-graph}
+\end{figure}
+\section{Resultats provisionals}
+
+Per valorar els resultats del projecte em basaré directament en els objectius que m'havia proposat i comentaré un per un aquells 
+que en aquesta fase del projecte mostren progrés o estan completats.
+
+En aquesta entrega parlaré dels objectius referents al Minimum Viable Product, o sigui aquells necessaris per a considerar el projecte 
+completat, els comentaré en l'ordre aproximat en que he abordat i resolt els reptes que proposaven:
+\begin{itemize}
+        \item {El primer objectiu proposa dissenyar una xarxa neuronal capaç de reconèixer aquelles pistes sobre les que ha estat entrenada. He aconseguit entrenar el model pix2pix, que deriva d'una xarxa UNet fins a aconseguir una accuracy en la validació del 98\% sense overfitting, i he demostrat que les prediccions són prou precises i consistents com per a permetre una aproximació a la pista i una aterratge autònoms. En la figura \ref{fig-pred-exmpl} es pot veure un exemple de les prediccions que obtinc actualment, i en la figura \ref{fig-loss-graph} es pot veure el resultat del procés d'entrenament.}
+        \item {El segon objectiu consisteix en dissenyar un simulador prou exacte com per permetre provar una integració completa del sistema. Aquest objectiu també el considero completat en aquest punt del projecte, com he comentat en el punt 3.3 he dissenyat la simulació en Unity i estic satisfet amb el resultat ja que sense assumir gairebé res sobre com hauria de funcionar un avió i simplement implementant la simulació de les físiques involucrades en el problema he aconseguit un simulador que es comporta de forma prou similar a un avió i que implementa totes les mecàniques rellevants al problema que vull resoldre.}
+        \item {Finalment, el tercer objectiu per a un MVP consistia en dissenyar un algoritme de control capaç de controlar l'avió amb la informació que rep de la xara neuronal i de sensors simples. Aquest objectiu també està completat, de manera que utilitzant tan sols una càmera, un giroscopi i un sensor ultrasònic que pot detectar el terra desde fins a quatre metres d'alçada l'avió es pot guiar de forma autònoma fins a realitzar un aterratge controlat en la pista d'eterratge, tal i com es pot veure en aquest \href{https://github.com/NarcisNogue/Aterratge-automatic-d-avions-model-basat-en-visio#autor-narc%C3%ADs-nogu%C3%A9-bonet}{vídeo} de la pàgina de GitHub del projecte.}
+\end{itemize}
+
+\section{Conclusions provisionals}
+Vull començar dient que considero que a l'hora de triar el projecte que volia abordar pel meu TFG vaig ser conscientment ambiciós, tot 
+i que sabia que probablement no seria a temps d'acabar tots els objectius que em proposava al nivell de qualitat que desitjava, i efectivament 
+he hagut d'agafar draceres i assumir l'actitud de optimitzar tot el projecte al voltant de tenir una demostració de viabilitat el més 
+ràpid possible perquè sinó hagués estat impossible per a mi complir els objectius a temps.
+
+Dit això, estic increïblement satisfet amb els resultats que he obtingut fins al moment, tots els passos que em vaig proposar a l'inici 
+del projecte han encaixat perfectament entre ells i he pogut desenvolupar-los exactament en el temps previst, i he demostrat que un avió 
+pot aterrar seguint el mètode que vaig proposar basant-se principalment en la visió.
+
+Vull aprofitar per recordar quin és el motiu pel que considero que és necessari que un avió pugui aterrar només amb visió i mesures internes
+com podrien ser giroscopis o sensors de proximitat: actualment tots els mètodes d'aterratge autònom es basen en infrastructura instal·lada
+a la pista d'aterratge o bé en les coordenades GPS de la pista. En el primer cas el problema és obvi, no totes les pistes tenen la 
+infrastructura necessària per a un aterratge autònom i això limita els aeroports on aquest mètode és viable. En el segon cas considero 
+que el problema és que es confia en dades externes que no tenen necessàriament una correlació directa amb el món real, les coordenades 
+podrien ser errònies o la pista podria haver canviat lleugerament i l'avió no té forma de contrastar i comprovar les dades GPS que rep.
+
+Per tant considero que una aproximació visual és l'únic mètode que permet que l'avió extregui tota la informació que necessita directament 
+del món que l'envolta, i això assegura que la informació sobre la que treballa representa exactament el món en el que es mou. Per tant 
+aquest mètode permet aterrar en qualsevol aeroport sota les Regles de Vol Visual, i elimina les limitacions que presenten els mètodes 
+més utilitzats actualment.
+
+Finalment, m'agradaria destacar el potencial que crec que un aterratge visual té, la demostració que presento actualment és extremadament 
+limitada i no representa el total de possibilitats que s'obren quan un vehicle autònom es pot guiar per la visió. Si tingués més temps 
+per desenvolupar aquest projecte m'agradaria arribar al punt en que l'avió pogués fer un model en tres dimensions del món que l'envolta 
+utilitzant la informació que rep desde la càmera, i preparar i seguir una trajectòria en aquest model 3D, de manera que pogués seguir 
+la ruta més òptima o patrons d'aproximació preestablerts, i considero que tot això és possible utilitzant únicament la visió.
 
 
 % BIBLIOGRAFIA --------------------------------------------------------
