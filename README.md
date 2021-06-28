@@ -16,22 +16,32 @@ https://user-images.githubusercontent.com/62506260/120079219-37a26280-c0b3-11eb-
 <summary>Informe inicial</summary>
 <br>
 
+[InformeInicialTFG.pdf](https://github.com/NarcisNogue/Aterratge-automatic-d-avions-model-basat-en-visio/files/6728587/InformeInicialTFG.pdf)
+
 </details>
 
 <details>
 <summary>Informe de progrés I</summary>
 <br>
+  
+[InformeProgres1.pdf](https://github.com/NarcisNogue/Aterratge-automatic-d-avions-model-basat-en-visio/files/6728593/InformeProgres1.pdf)
 
 </details>
 
 <details>
 <summary>Informe de progrés II</summary>
 <br>
+  
+[InformeProgres2.pdf](https://github.com/NarcisNogue/Aterratge-automatic-d-avions-model-basat-en-visio/files/6728600/InformeProgres2.pdf)
+
 
 </details>
 
 <details>
 <summary>Informe final</summary>
 <br>
+  
+[InformeFinal.pdf](https://github.com/NarcisNogue/Aterratge-automatic-d-avions-model-basat-en-visio/files/6728606/InformeFinal.pdf)
+
 
 </details>
